@@ -29,7 +29,7 @@ type pipeline struct {
 // Doc represents an HTML 5 document.
 type Doc struct {
 	Head *Head
-	Body   *Body
+	Body *Body
 
 	// Pipeline provides a Go template pipeline object.
 	Pipeline interface{}
@@ -128,6 +128,36 @@ type outputAble interface {
 	fmt.Stringer
 }
 
+// DynamicFunc is a function that uses dynamic server data to return Elements that will be rendered.
+type DynamicFunc func() []Element
+
+type dynamic struct {
+	f    DynamicFunc
+	pool sync.Pool
+}
+
+func (d *dynamic) Execute(data interface{}) template.HTML {
+	buff := d.pool.Get().(*strings.Builder)
+	defer d.pool.Put(buff)
+	buff.Reset()
+
+	for _, e := range d.f() {
+		buff.WriteString(string(e.Execute(data)))
+	}
+	return template.HTML(buff.String())
+}
+
+func (d *dynamic) isElement() {}
+
+func (d *dynamic) compile() error {
+	return nil
+}
+
+// Dynamic wraps a DynamicFunc so that it implements Element.
+func Dynamic(f DynamicFunc) Element {
+	return &dynamic{f: f}
+}
+
 // TextElement is an element that represents text, usually in a value. It is not valid everywhere.
 type TextElement string
 
@@ -191,7 +221,7 @@ func structToString(i interface{}) string {
 		}
 
 		// Special value that we skip.
-		if name == "TagValue"{
+		if name == "TagValue" {
 			continue
 		}
 
@@ -256,7 +286,7 @@ func structToString(i interface{}) string {
 		}
 
 		if suffix := sf.Tag.Get("suffix"); suffix != "" {
-			str = str+suffix
+			str = str + suffix
 		}
 
 		if isNaked {

@@ -2,10 +2,10 @@ package html
 
 import (
 	"fmt"
-	"sync"
-	"strings"
 	"html/template"
 	"net/url"
+	"strings"
+	"sync"
 )
 
 var imgTmpl = strings.TrimSpace(`

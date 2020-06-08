@@ -1,8 +1,8 @@
 package html
 
 import (
-	"testing"
 	"net/url"
+	"testing"
 )
 
 func TestBase(t *testing.T) {
@@ -10,7 +10,7 @@ func TestBase(t *testing.T) {
 
 	tests := []struct {
 		desc string
-		base    *Base
+		base *Base
 		want string
 	}{
 		{
@@ -19,7 +19,7 @@ func TestBase(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Href: u,
+				Href:   u,
 				Target: "_blank",
 			},
 			want: `<base href="/subpage" target="_blank" accesskey="key">`,

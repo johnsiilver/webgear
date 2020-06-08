@@ -1,23 +1,23 @@
 package html
 
 import (
-	"testing"
 	"net/url"
 	"strings"
+	"testing"
 )
 
 func TestScript(t *testing.T) {
 	u, _ := url.Parse("/subpage")
 
 	tests := []struct {
-		desc string
-		script    *Script
-		want string
+		desc   string
+		script *Script
+		want   string
 	}{
 		{
-			desc: "Empty",
+			desc:   "Empty",
 			script: &Script{},
-			want: "<script  >\n\t\n</script>",
+			want:   "<script  >\n\t\n</script>",
 		},
 		{
 			desc: "Everything + 1 global",
@@ -25,14 +25,14 @@ func TestScript(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Src: u,
-				Type: "media",
-				Async: true,
-				Defer: true,
+				Src:      u,
+				Type:     "media",
+				Async:    true,
+				Defer:    true,
 				TagValue: "javascript",
 			},
 			want: strings.TrimSpace(
-`<script src="/subpage" type="media" async defer accesskey="key">
+				`<script src="/subpage" type="media" async defer accesskey="key">
 	javascript
 </script>`),
 		},

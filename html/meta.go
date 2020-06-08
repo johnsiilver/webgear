@@ -14,19 +14,19 @@ type HTTPEquiv string
 
 const (
 	ContentSecurityPolicyHE HTTPEquiv = "content-security-policy"
-	ContentTypeHE HTTPEquiv = "content-type"
-	DefaultStyleHE HTTPEquiv = "default-style"
-	RefreshHE HTTPEquiv = "refresh"
+	ContentTypeHE           HTTPEquiv = "content-type"
+	DefaultStyleHE          HTTPEquiv = "default-style"
+	RefreshHE               HTTPEquiv = "refresh"
 )
 
 type MetaName string
 
 const (
 	ApplicationNameMN MetaName = "application-name"
-	DescriptionMN MetaName = "description"
-	GeneratorMN MetaName = "generator"
-	KeywordsMN MetaName = "keywords"
-	ViewportMN MetaName = "viewport"
+	DescriptionMN     MetaName = "description"
+	GeneratorMN       MetaName = "generator"
+	KeywordsMN        MetaName = "keywords"
+	ViewportMN        MetaName = "viewport"
 )
 
 // Meta defines an HTML meta tag.
@@ -34,14 +34,14 @@ type Meta struct {
 	GlobalAttrs
 
 	// Charset holds the character encoding of the html document. We only support the value UTF-8.
-	Charset	string
+	Charset string
 
 	HTTPEquiv HTTPEquiv `html:"http-equiv"`
 
 	MetaName MetaName
 
 	// Content specifies the value associated with the http-equiv or name attribute.
-	Content	string	
+	Content string
 
 	tmpl *template.Template
 

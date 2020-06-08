@@ -1,9 +1,9 @@
 package html
 
 import (
-	"testing"
-	"strings"
 	"net/url"
+	"strings"
+	"testing"
 )
 
 func TestImg(t *testing.T) {
@@ -11,7 +11,7 @@ func TestImg(t *testing.T) {
 
 	tests := []struct {
 		desc string
-		img    *Img
+		img  *Img
 		want string
 	}{
 		{
@@ -21,23 +21,23 @@ func TestImg(t *testing.T) {
 					AccessKey: "key",
 				},
 				Events:         (&Events{}).OnError("handleError"),
-				Src: u,
-				SrcSet: u,
-				Alt: "alt",	
-				UseMap: "#map",
-				CrossOrigin: UseCredentialsCO,
-				HeightPx: 100,
-				WidthPx: 100,
-				IsMap: true,
-				LongDesc: u,
+				Src:            u,
+				SrcSet:         u,
+				Alt:            "alt",
+				UseMap:         "#map",
+				CrossOrigin:    UseCredentialsCO,
+				HeightPx:       100,
+				WidthPx:        100,
+				IsMap:          true,
+				LongDesc:       u,
 				ReferrerPolicy: OriginWhenCrossOrigin,
-				Sizes: "sizes",
+				Sizes:          "sizes",
 			},
 
 			want: strings.TrimSpace(`
-<img src="/path" srcset="/path" alt="alt" usemap="#map" crossorigin="use-credentials" `+
-`height="100px" width="100px" ismap longdesc="/path" referrerpolicy="origin-when-cross-origin" sizes="sizes" `+
-`accesskey="key" onerror="handleError"/>
+<img src="/path" srcset="/path" alt="alt" usemap="#map" crossorigin="use-credentials" ` +
+				`height="100px" width="100px" ismap longdesc="/path" referrerpolicy="origin-when-cross-origin" sizes="sizes" ` +
+				`accesskey="key" onerror="handleError"/>
 `),
 		},
 	}

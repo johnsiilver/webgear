@@ -1,15 +1,15 @@
 package html
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestComponent(t *testing.T) {
 	tests := []struct {
-		desc string
-		component    *Component
-		want string
+		desc      string
+		component *Component
+		want      string
 	}{
 		{
 			desc: "All attributes + 1 global + 1 event ",
@@ -17,9 +17,9 @@ func TestComponent(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				TagType: "myComponent",
+				TagType:  "myComponent",
 				TagValue: TextElement("value"),
-				Events:         (&Events{}).OnError("handleError"),
+				Events:   (&Events{}).OnError("handleError"),
 			},
 
 			want: strings.TrimSpace(`

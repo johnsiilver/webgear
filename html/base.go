@@ -3,8 +3,8 @@ package html
 import (
 	"fmt"
 	"html/template"
-	"strings"
 	"net/url"
+	"strings"
 )
 
 var baseTmpl = strings.TrimSpace(`

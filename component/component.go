@@ -2,10 +2,10 @@
 package component
 
 import (
-	"strings"
-	"sync"
 	"fmt"
 	"html/template"
+	"strings"
+	"sync"
 
 	"github.com/johnsiilver/webgear/html"
 
@@ -48,7 +48,7 @@ type Gear struct {
 	pool sync.Pool
 
 	namePrefix string
-	name string
+	name       string
 
 	tmpl *template.Template
 }
@@ -68,7 +68,7 @@ func NewGear(name string, doc *html.Doc) (*Gear, error) {
 	}
 
 	g := Gear{
-		Doc: doc,
+		Doc:        doc,
 		namePrefix: name,
 		pool: sync.Pool{
 			New: func() interface{} {
@@ -117,7 +117,7 @@ func (g *Gear) Execute(data interface{}) (template.HTML, error) {
 	var err error
 	if g.Pretty {
 		err = g.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "gear", pipeline{Self: g, Data: data})
-	}else{
+	} else {
 		err = g.tmpl.ExecuteTemplate(w, "gear", pipeline{Self: g, Data: data})
 	}
 	if err != nil {
