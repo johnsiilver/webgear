@@ -298,3 +298,13 @@ func structToString(i interface{}) string {
 
 	return strings.Join(out, " ")
 }
+
+// URLParse returns a *url.URL representation of "s". If it cannot be parsed, this will panic.
+func URLParse(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
+}
