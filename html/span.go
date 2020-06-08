@@ -2,9 +2,9 @@ package html
 
 import (
 	"fmt"
-	"sync"
-	"strings"
 	"html/template"
+	"strings"
+	"sync"
 )
 
 var spanTmpl = strings.TrimSpace(`

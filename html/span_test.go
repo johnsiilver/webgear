@@ -1,14 +1,14 @@
 package html
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestSpan(t *testing.T) {
 	tests := []struct {
 		desc string
-		span    *Span
+		span *Span
 		want string
 	}{
 		{
@@ -18,7 +18,7 @@ func TestSpan(t *testing.T) {
 					AccessKey: "key",
 				},
 				Element: TextElement("text"),
-				Events:         (&Events{}).OnError("handleError"),
+				Events:  (&Events{}).OnError("handleError"),
 			},
 
 			want: strings.TrimSpace(`

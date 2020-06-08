@@ -1,44 +1,42 @@
-
-
 package html
 
 import (
 	"fmt"
 	"html/template"
-	"strings"
 	"net/url"
+	"strings"
 )
 
 type CrossOrigin string
 
 const (
-	AnnonymousCO CrossOrigin = "anonymous"
+	AnnonymousCO     CrossOrigin = "anonymous"
 	UseCredentialsCO CrossOrigin = "use-credentials"
 )
 
 type RelationshipLink string
 
 const (
-	AlternateRL RelationshipLink = "alternate"
-	AuthorRL RelationshipLink = "author"
+	AlternateRL   RelationshipLink = "alternate"
+	AuthorRL      RelationshipLink = "author"
 	DNSPrefetchRL RelationshipLink = "dns-prefetch"
-	HelpRL  RelationshipLink = "help"
-	IconRL  RelationshipLink = "icon"
-	LicenseRL RelationshipLink = "license"
-	NextRL RelationshipLink = "next"
-	PingBackRL RelationshipLink = "pingback"
+	HelpRL        RelationshipLink = "help"
+	IconRL        RelationshipLink = "icon"
+	LicenseRL     RelationshipLink = "license"
+	NextRL        RelationshipLink = "next"
+	PingBackRL    RelationshipLink = "pingback"
 	PreConnectRL  RelationshipLink = "preconnect"
-	PreFetchRL RelationshipLink = "prefetch"
-	PreLoadRL RelationshipLink = "preload"
-	PreRenderRL RelationshipLink = "prerender"
-	PrevRL RelationshipLink = "prev"
-	SearchRL RelationshipLink = "search"
-	StylesheetRL RelationshipLink = "stylesheet"
+	PreFetchRL    RelationshipLink = "prefetch"
+	PreLoadRL     RelationshipLink = "preload"
+	PreRenderRL   RelationshipLink = "prerender"
+	PrevRL        RelationshipLink = "prev"
+	SearchRL      RelationshipLink = "search"
+	StylesheetRL  RelationshipLink = "stylesheet"
 )
 
 type Sizes struct {
 	Height int
-	Width int
+	Width  int
 }
 
 func (s Sizes) outputAble() {}
@@ -62,11 +60,10 @@ var linkTmpl = strings.TrimSpace(`
 <link {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}}>
 `)
 
-
 // Link defines an HTML link tag.
 type Link struct {
 	GlobalAttrs
-	
+
 	// Href specifies the location of the linked document.
 	Href *url.URL
 
@@ -78,13 +75,13 @@ type Link struct {
 	// Media specifies on what device the linked document will be displayed.
 	Media string
 
-	ReferrerPolicy	ReferrerPolicy
+	ReferrerPolicy ReferrerPolicy
 
 	// Rel (required) specifies the relationship between the current document and the linked document.
-	Rel RelationshipLink 
+	Rel RelationshipLink
 
 	// Sizes specifies the size of the linked resource. Only for rel="icon".
-	Sizes	Sizes
+	Sizes Sizes
 
 	// Type specifies the media type of the linked document.
 	Type string

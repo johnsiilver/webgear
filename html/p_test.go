@@ -1,8 +1,8 @@
 package html
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestP(t *testing.T) {
@@ -18,7 +18,7 @@ func TestP(t *testing.T) {
 					AccessKey: "key",
 				},
 				Element: TextElement("text"),
-				Events:         (&Events{}).OnError("handleError"),
+				Events:  (&Events{}).OnError("handleError"),
 			},
 
 			want: strings.TrimSpace(`

@@ -1,20 +1,20 @@
 package html
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestTitle(t *testing.T) {
 	tests := []struct {
-		desc string
-		title    *Title
-		want string
+		desc  string
+		title *Title
+		want  string
 	}{
 		{
-			desc: "Empty attributes",
-			title:    &Title{},
-			want: "<title ></title>",
+			desc:  "Empty attributes",
+			title: &Title{},
+			want:  "<title ></title>",
 		},
 		{
 			desc: "All attributes + 1 global",

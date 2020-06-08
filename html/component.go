@@ -2,14 +2,14 @@ package html
 
 import (
 	"fmt"
-	"sync"
 	"strings"
+	"sync"
 	"text/template"
 
 	html "html/template"
 )
 
-// Attribute provides a custom attribute for a user to provide for custom componenets.  
+// Attribute provides a custom attribute for a user to provide for custom componenets.
 type Attribute interface {
 	fmt.Stringer
 	IsAttr()

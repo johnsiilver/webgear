@@ -1,19 +1,19 @@
 package html
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestDiv(t *testing.T) {
 	tests := []struct {
 		desc string
-		div    *Div
+		div  *Div
 		want string
 	}{
 		{
 			desc: "Empty attributes",
-			div:    &Div{},
+			div:  &Div{},
 			want: "<div  >\n</div>",
 		},
 		{
@@ -22,7 +22,7 @@ func TestDiv(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Events:         (&Events{}).OnError("handleError"),
+				Events: (&Events{}).OnError("handleError"),
 				Elements: []Element{
 					&A{Href: "/subpage", TagValue: TextElement("hello")},
 				},

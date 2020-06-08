@@ -3,8 +3,8 @@ package html
 import (
 	"fmt"
 	"html/template"
-	"strings"
 	"net/url"
+	"strings"
 )
 
 var scriptTmpl = strings.TrimSpace(`
@@ -21,13 +21,13 @@ type Script struct {
 	Src *url.URL
 
 	// Type specifies the media type of the script.
-	Type string 
+	Type string
 
 	// Async specifies that the script is executed asynchronously (only for external scripts).
 	Async bool `html:"attr"`
 
 	// Defer specifies that the script is executed when the page has finished parsing (only for external scripts).
-	Defer 	bool `html:"attr"` 	
+	Defer bool `html:"attr"`
 
 	// TagValue holds the value that is between the begin and ending tag. This should be a script of some type.
 	TagValue template.JS

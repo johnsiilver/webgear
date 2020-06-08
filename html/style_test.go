@@ -1,19 +1,19 @@
 package html
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestStyle(t *testing.T) {
 	tests := []struct {
-		desc string
-		style    *Style
-		want string
+		desc  string
+		style *Style
+		want  string
 	}{
 		{
-			desc: "Empty attributes",
-			style:    &Style{},
+			desc:  "Empty attributes",
+			style: &Style{},
 			want: strings.TrimSpace(`
 <style  >
 
@@ -26,11 +26,11 @@ func TestStyle(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				TagValue:       TextElement("text"),
-				Events:         (&Events{}).OnError("handleError"),
+				TagValue: TextElement("text"),
+				Events:   (&Events{}).OnError("handleError"),
 			},
 			want: strings.TrimSpace(
-`<style accesskey="key" onerror="handleError">
+				`<style accesskey="key" onerror="handleError">
 text
 </style>`),
 		},

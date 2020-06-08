@@ -1,22 +1,22 @@
 package component
 
 import (
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/johnsiilver/webgear/html"
 
-	"github.com/yosssi/gohtml"
 	"github.com/kylelemons/godebug/pretty"
+	"github.com/yosssi/gohtml"
 )
 
 func TestComponent(t *testing.T) {
-	tests := []struct{
+	tests := []struct {
 		desc string
 		name string
-		doc *html.Doc
+		doc  *html.Doc
 		want string
-		err bool
+		err  bool
 	}{
 		{
 			desc: "Success",
@@ -26,7 +26,7 @@ func TestComponent(t *testing.T) {
 					Elements: []html.Element{
 						&html.Div{
 							Elements: []html.Element{
-								&html.A{Href:"/self", TagValue: html.TextElement("link")},
+								&html.A{Href: "/self", TagValue: html.TextElement("link")},
 							},
 						},
 					},
@@ -63,7 +63,7 @@ func TestComponent(t *testing.T) {
 			t.Errorf("TestComponent(%s): got err == nil, want err != nil", test.desc)
 		case err != nil && !test.err:
 			t.Errorf("TestComponent(%s): got err == %s, want err == nil", test.desc, err)
-		case err != nil: 
+		case err != nil:
 			continue
 		}
 
