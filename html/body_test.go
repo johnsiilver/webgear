@@ -46,7 +46,7 @@ func TestBody(t *testing.T) {
 		if err := test.body.compile(); err != nil {
 			panic(err)
 		}
-		got := test.body.Execute(struct{}{})
+		got := test.body.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestBody(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

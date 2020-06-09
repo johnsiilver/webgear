@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -15,24 +16,30 @@ import (
 
 var docTmpl = strings.TrimSpace(`
 {{- if not .Self.Component}}<html>
-	{{.Self.Head.Execute .Data }}
+	{{.Self.Head.Execute .}}
 {{- end}}
-	{{.Self.Body.Execute .Data}}
+	{{.Self.Body.Execute .}}
 {{- if not .Self.Component}}</html>{{end}}
 `)
 
-type pipeline struct {
+// Pipeline represents a template pipeline. The Self attribute is only usable internally, any other use is
+// not supported. Component is used only internally by the component pacakge, any other use is not supported.
+// Data is what the user wishes to pass in for their application.
+type Pipeline struct {
+	// Req is the http.Request object for this call.
+	Req *http.Request
+	// Self represents the data structure of the object that is executing the template. This allows
+	// a template to access attributes that represent a tag, such as A{} accessing Href for rendering.
+	// A user should not set this, as it is automatically changed by the various Element implementations.
 	Self interface{}
-	Data interface{}
+	// GearData provides a map of pipeline data keyed by gear name.
+	GearData map[string]interface{}
 }
 
 // Doc represents an HTML 5 document.
 type Doc struct {
 	Head *Head
 	Body *Body
-
-	// Pipeline provides a Go template pipeline object.
-	Pipeline interface{}
 
 	// Pretty says to make the HTML look pretty before outputting.
 	Pretty bool
@@ -83,25 +90,27 @@ func (d *Doc) Compile() error {
 }
 
 // Execute executes the internal template and writes the output to the io.Writer.
-func (d *Doc) Execute(w io.Writer, data interface{}) error {
+func (d *Doc) Execute(w io.Writer, pipe Pipeline) error {
 	if d.tmpl == nil {
 		return fmt.Errorf("must call Compile() before Execute() on Doc type")
 	}
 
+	pipe.Self = d
+
 	if d.Pretty {
-		return d.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "doc", pipeline{Self: d, Data: data})
+		return d.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "doc", pipe)
 	}
 
-	return d.tmpl.ExecuteTemplate(w, "doc", pipeline{Self: d, Data: data})
+	return d.tmpl.ExecuteTemplate(w, "doc", pipe)
 }
 
 // Render calls execute execute and returns the string value.
-func (d *Doc) Render(data interface{}) (template.HTML, error) {
+func (d *Doc) Render(pipe Pipeline) (template.HTML, error) {
 	w := d.pool.Get().(*strings.Builder)
 	defer d.pool.Put(w)
 	w.Reset()
 
-	if err := d.Execute(w, data); err != nil {
+	if err := d.Execute(w, pipe); err != nil {
 		return "", err
 	}
 
@@ -118,7 +127,7 @@ func (d *Doc) validate() error {
 
 // Element represents an HTML 5 element.
 type Element interface {
-	Execute(data interface{}) template.HTML
+	Execute(pipe Pipeline) template.HTML
 	compile() error
 	isElement()
 }
@@ -136,13 +145,15 @@ type dynamic struct {
 	pool sync.Pool
 }
 
-func (d *dynamic) Execute(data interface{}) template.HTML {
+func (d *dynamic) Execute(pipe Pipeline) template.HTML {
 	buff := d.pool.Get().(*strings.Builder)
 	defer d.pool.Put(buff)
 	buff.Reset()
 
+	pipe.Self = d
+
 	for _, e := range d.f() {
-		buff.WriteString(string(e.Execute(data)))
+		buff.WriteString(string(e.Execute(pipe)))
 	}
 	return template.HTML(buff.String())
 }
@@ -163,7 +174,7 @@ type TextElement string
 
 func (t TextElement) isElement() {}
 
-func (t TextElement) Execute(data interface{}) template.HTML {
+func (t TextElement) Execute(pipe Pipeline) template.HTML {
 	return template.HTML(t)
 }
 

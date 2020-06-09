@@ -9,7 +9,10 @@ import (
 
 var pTmpl = strings.TrimSpace(`
 <p {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{.Self.Element.Execute .Data}}
+	{{- $data := .}}
+	{{- range .Self.Elements}}
+	{{.Execute $data}}
+	{{- end}}
 </p>
 `)
 
@@ -18,7 +21,7 @@ type P struct {
 	GlobalAttrs
 	Events *Events
 
-	Element Element
+	Elements []Element
 
 	tmpl *template.Template
 
@@ -47,12 +50,14 @@ func (p *P) compile() error {
 	return nil
 }
 
-func (p *P) Execute(data interface{}) template.HTML {
+func (p *P) Execute(pipe Pipeline) template.HTML {
 	buff := p.pool.Get().(*strings.Builder)
 	defer p.pool.Put(buff)
 	buff.Reset()
 
-	if err := p.tmpl.Execute(buff, pipeline{Self: p, Data: data}); err != nil {
+	pipe.Self = p
+
+	if err := p.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

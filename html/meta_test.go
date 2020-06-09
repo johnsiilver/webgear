@@ -49,7 +49,7 @@ func TestMeta(t *testing.T) {
 		if err := test.meta.compile(); err != nil {
 			panic(err)
 		}
-		got := test.meta.Execute(struct{}{})
+		got := test.meta.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestMeta(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

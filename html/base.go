@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 var baseTmpl = strings.TrimSpace(`
@@ -23,7 +24,7 @@ type Base struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
 
 func (b *Base) isElement() {}
@@ -47,20 +48,23 @@ func (b *Base) compile() error {
 		return fmt.Errorf("Base object had error: %s", err)
 	}
 
+	b.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
+
 	return nil
 }
 
-func (b *Base) Execute(data interface{}) template.HTML {
-	if b.str != "" {
-		return template.HTML(b.str)
-	}
+func (b *Base) Execute(pipe Pipeline) template.HTML {
+	buff := b.pool.Get().(*strings.Builder)
+	defer b.pool.Put(buff)
+	buff.Reset()
 
-	buff := strings.Builder{}
-
-	if err := b.tmpl.Execute(&buff, pipeline{Self: b, Data: data}); err != nil {
+	if err := b.tmpl.Execute(buff, Pipeline{Self: b}); err != nil {
 		panic(err)
 	}
 
-	b.str = buff.String()
-	return template.HTML(b.str)
+	return template.HTML(buff.String())
 }

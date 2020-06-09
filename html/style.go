@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"sync"
 )
 
 var styleTmpl = strings.TrimSpace(`
@@ -23,7 +24,7 @@ type Style struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
 
 func (s *Style) validate() error {
@@ -50,20 +51,24 @@ func (s *Style) compile() error {
 		return fmt.Errorf("Style object had error: %s", err)
 	}
 
+	s.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
 	return nil
 }
 
-func (s *Style) Execute(data interface{}) template.HTML {
-	if s.str != "" {
-		return template.HTML(s.str)
-	}
+func (s *Style) Execute(pipe Pipeline) template.HTML {
+	buff := s.pool.Get().(*strings.Builder)
+	defer s.pool.Put(buff)
+	buff.Reset()
 
-	buff := strings.Builder{}
+	pipe.Self = s
 
-	if err := s.tmpl.Execute(&buff, pipeline{Self: s, Data: data}); err != nil {
+	if err := s.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	s.str = buff.String()
-	return template.HTML(s.str)
+	return template.HTML(buff.String())
 }

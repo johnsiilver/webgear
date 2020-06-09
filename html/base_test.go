@@ -30,7 +30,7 @@ func TestBase(t *testing.T) {
 		if err := test.base.compile(); err != nil {
 			panic(err)
 		}
-		got := test.base.Execute(struct{}{})
+		got := test.base.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestBase(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

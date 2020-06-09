@@ -9,7 +9,7 @@ import (
 
 var navTmpl = strings.TrimSpace(`
 <nav {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{- $data := .Data}}
+	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
@@ -50,12 +50,14 @@ func (n *Nav) compile() error {
 	return nil
 }
 
-func (n *Nav) Execute(data interface{}) template.HTML {
+func (n *Nav) Execute(pipe Pipeline) template.HTML {
 	buff := n.pool.Get().(*strings.Builder)
 	defer n.pool.Put(buff)
 	buff.Reset()
 
-	if err := n.tmpl.Execute(buff, pipeline{Self: n, Data: data}); err != nil {
+	pipe.Self = n
+
+	if err := n.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

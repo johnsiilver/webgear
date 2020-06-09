@@ -40,7 +40,7 @@ func TestDiv(t *testing.T) {
 		if err := test.div.compile(); err != nil {
 			panic(err)
 		}
-		got := test.div.Execute(struct{}{})
+		got := test.div.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestDiv(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

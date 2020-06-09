@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"sync"
 )
 
 var metaTmpl = strings.TrimSpace(`
@@ -45,18 +46,12 @@ type Meta struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
-
-var zeroMeta = Meta{}
 
 func (m *Meta) validate() error {
 	if m == nil {
 		return nil
-	}
-
-	if *m == zeroMeta {
-		return fmt.Errorf("Meta tag defined with no attributes set")
 	}
 
 	attrs := []string{
@@ -103,20 +98,25 @@ func (m *Meta) compile() error {
 		return fmt.Errorf("Meta object had error: %s", err)
 	}
 
+	m.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
+
 	return nil
 }
 
-func (m *Meta) Execute(data interface{}) template.HTML {
-	if m.str != "" {
-		return template.HTML(m.str)
-	}
+func (m *Meta) Execute(pipe Pipeline) template.HTML {
+	buff := m.pool.Get().(*strings.Builder)
+	defer m.pool.Put(pipe)
+	buff.Reset()
 
-	buff := strings.Builder{}
+	pipe.Self = m
 
-	if err := m.tmpl.Execute(&buff, pipeline{Self: m, Data: data}); err != nil {
+	if err := m.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	m.str = buff.String()
-	return template.HTML(m.str)
+	return template.HTML(buff.String())
 }

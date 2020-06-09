@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"sync"
 )
 
 var divTmpl = strings.TrimSpace(`
 <div {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{- $data := .Data}}
+	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
@@ -25,7 +26,7 @@ type Div struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
 
 func (d *Div) isElement() {}
@@ -43,20 +44,25 @@ func (d *Div) compile() error {
 		}
 	}
 
+	d.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
+
 	return nil
 }
 
-func (d *Div) Execute(data interface{}) template.HTML {
-	if d.str != "" {
-		return template.HTML(d.str)
-	}
+func (d *Div) Execute(pipe Pipeline) template.HTML {
+	buff := d.pool.Get().(*strings.Builder)
+	defer d.pool.Put(buff)
+	buff.Reset()
 
-	buff := strings.Builder{}
+	pipe.Self = d
 
-	if err := d.tmpl.Execute(&buff, pipeline{Self: d, Data: data}); err != nil {
+	if err := d.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	d.str = buff.String()
-	return template.HTML(d.str)
+	return template.HTML(buff.String())
 }

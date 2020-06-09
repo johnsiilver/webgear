@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"sync"
 )
 
 var bodyTmpl = strings.TrimSpace(`
 {{- if not .Self.Component}}<body {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>{{- end}}
-	{{- $data := .Data}}
+	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
@@ -30,7 +31,7 @@ type Body struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
 
 func (b *Body) compile() error {
@@ -46,22 +47,27 @@ func (b *Body) compile() error {
 		}
 	}
 
+	b.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
+
 	return nil
 }
 
-func (b *Body) Execute(data interface{}) template.HTML {
-	if b.str != "" {
-		return template.HTML(b.str)
-	}
+func (b *Body) Execute(pipe Pipeline) template.HTML {
+	buff := b.pool.Get().(*strings.Builder)
+	defer b.pool.Put(buff)
+	buff.Reset()
 
-	buff := strings.Builder{}
+	pipe.Self = b
 
-	if err := b.tmpl.Execute(&buff, pipeline{Self: b, Data: data}); err != nil {
+	if err := b.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	b.str = buff.String()
-	return template.HTML(b.str)
+	return template.HTML(buff.String())
 }
 
 func (b *Body) validate() error {

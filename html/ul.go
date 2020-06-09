@@ -9,7 +9,7 @@ import (
 
 var ulTmpl = strings.TrimSpace(`
 <ul {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{- $data := .Data}}
+	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
@@ -50,12 +50,14 @@ func (u *Ul) compile() error {
 	return nil
 }
 
-func (u *Ul) Execute(data interface{}) template.HTML {
+func (u *Ul) Execute(pipe Pipeline) template.HTML {
 	buff := u.pool.Get().(*strings.Builder)
 	defer u.pool.Put(buff)
 	buff.Reset()
 
-	if err := u.tmpl.Execute(buff, pipeline{Self: u, Data: data}); err != nil {
+	pipe.Self = u
+
+	if err := u.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

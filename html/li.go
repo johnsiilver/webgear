@@ -9,7 +9,7 @@ import (
 
 var liTmpl = strings.TrimSpace(`
 <li {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{- $data := .Data}}
+	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
@@ -50,12 +50,14 @@ func (l *Li) compile() error {
 	return nil
 }
 
-func (l *Li) Execute(data interface{}) template.HTML {
+func (l *Li) Execute(pipe Pipeline) template.HTML {
 	buff := l.pool.Get().(*strings.Builder)
 	defer l.pool.Put(buff)
 	buff.Reset()
 
-	if err := l.tmpl.Execute(buff, pipeline{Self: l, Data: data}); err != nil {
+	pipe.Self = l
+
+	if err := l.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

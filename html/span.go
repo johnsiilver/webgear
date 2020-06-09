@@ -9,7 +9,10 @@ import (
 
 var spanTmpl = strings.TrimSpace(`
 <span {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{.Self.Element.Execute .Data}}
+	{{- $data := .}}
+	{{- range .Self.Elements}}
+	{{.Execute $data}}
+	{{- end}}
 </span>
 `)
 
@@ -18,7 +21,7 @@ type Span struct {
 	GlobalAttrs
 
 	// Element is any containing element.
-	Element Element
+	Elements []Element
 
 	Events *Events
 
@@ -44,12 +47,12 @@ func (s *Span) compile() error {
 	return nil
 }
 
-func (s *Span) Execute(data interface{}) template.HTML {
+func (s *Span) Execute(pipe Pipeline) template.HTML {
 	buff := s.pool.Get().(*strings.Builder)
 	defer s.pool.Put(buff)
 	buff.Reset()
 
-	if err := s.tmpl.Execute(buff, pipeline{Self: s, Data: data}); err != nil {
+	if err := s.tmpl.Execute(buff, Pipeline{Self: s}); err != nil {
 		panic(err)
 	}
 

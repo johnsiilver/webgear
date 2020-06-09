@@ -40,7 +40,7 @@ func TestNav(t *testing.T) {
 		if err := test.nav.compile(); err != nil {
 			panic(err)
 		}
-		got := test.nav.Execute(struct{}{})
+		got := test.nav.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestNav(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

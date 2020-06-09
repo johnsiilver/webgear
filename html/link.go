@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 type CrossOrigin string
@@ -88,18 +89,12 @@ type Link struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
-
-var zeroLink = Link{}
 
 func (l *Link) validate() error {
 	if l == nil {
 		return nil
-	}
-
-	if *l == zeroLink {
-		return fmt.Errorf("Link tag defined with no attributes set")
 	}
 
 	if l.Rel == "" {
@@ -127,20 +122,25 @@ func (l *Link) compile() error {
 		return fmt.Errorf("Link object had error: %s", err)
 	}
 
+	l.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
+
 	return nil
 }
 
-func (l *Link) Execute(data interface{}) template.HTML {
-	if l.str != "" {
-		return template.HTML(l.str)
-	}
+func (l *Link) Execute(pipe Pipeline) template.HTML {
+	buff := l.pool.Get().(*strings.Builder)
+	defer l.pool.Put(buff)
+	buff.Reset()
 
-	buff := strings.Builder{}
+	pipe.Self = l
 
-	if err := l.tmpl.Execute(&buff, pipeline{Self: l, Data: data}); err != nil {
+	if err := l.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	l.str = buff.String()
-	return template.HTML(l.str)
+	return template.HTML(buff.String())
 }

@@ -35,7 +35,7 @@ func TestTitle(t *testing.T) {
 		if err := test.title.compile(); err != nil {
 			panic(err)
 		}
-		got := test.title.Execute(struct{}{})
+		got := test.title.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestTitle(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"sync"
 )
 
 var titleTmpl = strings.TrimSpace(`
@@ -19,7 +20,7 @@ type Title struct {
 
 	tmpl *template.Template
 
-	str string
+	pool sync.Pool
 }
 
 func (t *Title) isElement() {}
@@ -41,20 +42,25 @@ func (t *Title) compile() error {
 		return fmt.Errorf("A object had error: %s", err)
 	}
 
+	t.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
+	}
+
 	return nil
 }
 
-func (t *Title) Execute(data interface{}) template.HTML {
-	if t.str != "" {
-		return template.HTML(t.str)
-	}
+func (t *Title) Execute(pipe Pipeline) template.HTML {
+	buff := t.pool.Get().(*strings.Builder)
+	defer t.pool.Put(buff)
+	buff.Reset()
 
-	buff := strings.Builder{}
+	pipe.Self = t
 
-	if err := t.tmpl.Execute(&buff, pipeline{Self: t, Data: data}); err != nil {
+	if err := t.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	t.str = buff.String()
-	return template.HTML(t.str)
+	return template.HTML(buff.String())
 }
