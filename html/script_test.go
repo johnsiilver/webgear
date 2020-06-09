@@ -42,7 +42,7 @@ func TestScript(t *testing.T) {
 		if err := test.script.compile(); err != nil {
 			panic(err)
 		}
-		got := test.script.Execute(struct{}{})
+		got := test.script.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestScript(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

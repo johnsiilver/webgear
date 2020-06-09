@@ -9,9 +9,8 @@ import (
 
 var headTmpl = strings.TrimSpace(`
 <head {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{- $data := .Data}}
 	{{- range .Self.Elements}}
-	{{.Execute $data}}
+	{{.Execute .}}
 	{{- end}}
 </head>
 `)
@@ -81,12 +80,14 @@ func (h *Head) compile() error {
 	return nil
 }
 
-func (h *Head) Execute(data interface{}) template.HTML {
+func (h *Head) Execute(pipe Pipeline) template.HTML {
 	buff := h.pool.Get().(*strings.Builder)
 	defer h.pool.Put(buff)
 	buff.Reset()
 
-	if err := h.tmpl.Execute(buff, pipeline{Self: h, Data: data}); err != nil {
+	pipe.Self = h
+
+	if err := h.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

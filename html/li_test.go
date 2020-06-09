@@ -40,7 +40,7 @@ func TestLi(t *testing.T) {
 		if err := test.li.compile(); err != nil {
 			panic(err)
 		}
-		got := test.li.Execute(struct{}{})
+		got := test.li.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestLi(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

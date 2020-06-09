@@ -46,7 +46,7 @@ func TestImg(t *testing.T) {
 		if err := test.img.compile(); err != nil {
 			panic(err)
 		}
-		got := test.img.Execute(struct{}{})
+		got := test.img.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestImg(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

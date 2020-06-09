@@ -9,13 +9,12 @@ import (
 
 	"github.com/johnsiilver/webgear/html"
 
-	"github.com/google/uuid"
 	"github.com/yosssi/gohtml"
 )
 
 var gearTmpl = strings.TrimSpace(`
 <template id="{{.Self.Name}}Template">
-	{{.Self.Doc.Render .Data}}
+	{{.Self.Doc.Render .}}
 </template>
 
 <script>
@@ -33,29 +32,27 @@ var gearTmpl = strings.TrimSpace(`
 </script>
 `)
 
-type pipeline struct {
-	Self interface{}
-	Data interface{}
-}
-
-// Gear is a shadow-dom component. It has a randomly created unique ID that is found by using .Name().
+// Gear is a shadow-dom component.
 type Gear struct {
-	Doc *html.Doc
+	// Doc is public to allow its use in internal templating code. It should only be set by the call to New().
+	Doc   *html.Doc
+	gears []*Gear
 
 	// Pretty says to make the HTML look pretty before outputting.
 	Pretty bool
 
 	pool sync.Pool
 
-	namePrefix string
-	name       string
+	name string
 
 	tmpl *template.Template
 }
 
-// NewGear creates a new Gear object called "name" using the HTML provided by the doc passed.
-// This will call Compile() on the *html.Doc.
-func NewGear(name string, doc *html.Doc) (*Gear, error) {
+// New creates a new Gear object called "name" using the HTML provided by the doc passed.
+// This will call Compile() on the *html.Doc. "gears" provides other componenets that this Gear
+// will execute before executing its own doc when rendering.  This allows a componenet to use
+// other components.
+func New(name string, doc *html.Doc, gears []*Gear) (*Gear, error) {
 	if name == "" {
 		return nil, fmt.Errorf("must provide a name for the Gear")
 	}
@@ -68,18 +65,14 @@ func NewGear(name string, doc *html.Doc) (*Gear, error) {
 	}
 
 	g := Gear{
-		Doc:        doc,
-		namePrefix: name,
+		Doc:  doc,
+		name: name,
 		pool: sync.Pool{
 			New: func() interface{} {
 				return &strings.Builder{}
 			},
 		},
 	}
-
-	id := uuid.New()
-
-	g.name = g.namePrefix + "-" + id.String()
 
 	if err := g.compile(); err != nil {
 		return nil, err
@@ -103,9 +96,8 @@ func (g *Gear) compile() error {
 	return nil
 }
 
-// Execute executes the internal templates and renders the html for output with the given "data" pipeline.
-// If you are unfamiliar with data pipelines, see https://golang.org/pkg/text/template/.
-func (g *Gear) Execute(data interface{}) (template.HTML, error) {
+// Execute executes the internal templates and renders the html for output with the given pipeline.
+func (g *Gear) Execute(pipe html.Pipeline) (template.HTML, error) {
 	if g.tmpl == nil {
 		return "", fmt.Errorf("Gear.Execute() called before Gear.Compile()")
 	}
@@ -114,11 +106,21 @@ func (g *Gear) Execute(data interface{}) (template.HTML, error) {
 	defer g.pool.Put(w)
 	w.Reset()
 
+	pipe.Self = g
+
 	var err error
+	for _, gear := range g.gears {
+		h, err := gear.Execute(pipe)
+		if err != nil {
+			return "", err
+		}
+		w.WriteString(string(h))
+	}
+
 	if g.Pretty {
-		err = g.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "gear", pipeline{Self: g, Data: data})
+		err = g.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "gear", pipe)
 	} else {
-		err = g.tmpl.ExecuteTemplate(w, "gear", pipeline{Self: g, Data: data})
+		err = g.tmpl.ExecuteTemplate(w, "gear", pipe)
 	}
 	if err != nil {
 		return "", err

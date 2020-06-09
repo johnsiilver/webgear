@@ -114,12 +114,14 @@ func (i *Img) compile() error {
 	return nil
 }
 
-func (i *Img) Execute(data interface{}) template.HTML {
+func (i *Img) Execute(pipe Pipeline) template.HTML {
 	buff := i.pool.Get().(*strings.Builder)
 	defer i.pool.Put(buff)
 	buff.Reset()
 
-	if err := i.tmpl.Execute(buff, pipeline{Self: i, Data: data}); err != nil {
+	pipe.Self = i
+
+	if err := i.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

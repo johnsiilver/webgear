@@ -70,12 +70,14 @@ func (c *Component) compile() error {
 	return nil
 }
 
-func (c *Component) Execute(data interface{}) html.HTML {
+func (c *Component) Execute(pipe Pipeline) html.HTML {
 	buff := c.pool.Get().(*strings.Builder)
 	defer c.pool.Put(buff)
 	buff.Reset()
 
-	if err := c.tmpl.Execute(buff, pipeline{Self: c, Data: data}); err != nil {
+	pipe.Self = c
+
+	if err := c.tmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

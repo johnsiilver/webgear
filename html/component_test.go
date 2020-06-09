@@ -34,7 +34,7 @@ func TestComponent(t *testing.T) {
 		if err := test.component.compile(); err != nil {
 			panic(err)
 		}
-		got := test.component.Execute(struct{}{})
+		got := test.component.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestComponent(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

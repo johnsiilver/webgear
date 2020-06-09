@@ -49,7 +49,7 @@ func TestLink(t *testing.T) {
 		if err := test.link.compile(); err != nil {
 			panic(err)
 		}
-		got := test.link.Execute(struct{}{})
+		got := test.link.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestLink(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

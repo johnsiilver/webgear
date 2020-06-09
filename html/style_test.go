@@ -40,7 +40,7 @@ text
 		if err := test.style.compile(); err != nil {
 			panic(err)
 		}
-		got := test.style.Execute(struct{}{})
+		got := test.style.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestStyle(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

@@ -110,14 +110,15 @@ func (a *A) compile() error {
 	return nil
 }
 
-func (a *A) Execute(data interface{}) template.HTML {
+func (a *A) Execute(pipe Pipeline) template.HTML {
 	if a.str != "" {
 		return template.HTML(a.str)
 	}
+	pipe.Self = a
 
 	buff := strings.Builder{}
 
-	if err := a.tmpl.Execute(&buff, pipeline{Self: a, Data: data}); err != nil {
+	if err := a.tmpl.Execute(&buff, pipe); err != nil {
 		panic(err)
 	}
 

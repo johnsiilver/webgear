@@ -57,7 +57,7 @@ func TestComponent(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		g, err := NewGear(test.name, test.doc)
+		g, err := New(test.name, test.doc, nil)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestComponent(%s): got err == nil, want err != nil", test.desc)
@@ -67,7 +67,7 @@ func TestComponent(t *testing.T) {
 			continue
 		}
 
-		got, err := g.Execute(struct{}{})
+		got, err := g.Execute(html.Pipeline{})
 		if err != nil {
 			t.Errorf("TestComponent(%s).Execute(): got err == %s, want err == nil", test.desc, err)
 			continue

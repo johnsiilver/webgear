@@ -17,8 +17,8 @@ func TestSpan(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Element: TextElement("text"),
-				Events:  (&Events{}).OnError("handleError"),
+				Elements: []Element{TextElement("text")},
+				Events:   (&Events{}).OnError("handleError"),
 			},
 
 			want: strings.TrimSpace(`
@@ -33,7 +33,7 @@ func TestSpan(t *testing.T) {
 		if err := test.span.compile(); err != nil {
 			panic(err)
 		}
-		got := test.span.Execute(struct{}{})
+		got := test.span.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestSpan(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}

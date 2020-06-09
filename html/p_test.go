@@ -17,8 +17,8 @@ func TestP(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Element: TextElement("text"),
-				Events:  (&Events{}).OnError("handleError"),
+				Elements: []Element{TextElement("text")},
+				Events:   (&Events{}).OnError("handleError"),
 			},
 
 			want: strings.TrimSpace(`
@@ -33,7 +33,7 @@ func TestP(t *testing.T) {
 		if err := test.p.compile(); err != nil {
 			panic(err)
 		}
-		got := test.p.Execute(struct{}{})
+		got := test.p.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestP(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
