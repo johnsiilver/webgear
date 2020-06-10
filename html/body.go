@@ -7,14 +7,14 @@ import (
 	"sync"
 )
 
-var bodyTmpl = strings.TrimSpace(`
+var bodyTmpl = template.Must(template.New("body").Parse(strings.TrimSpace(`
 {{- if not .Self.Component}}<body {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>{{- end}}
 	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
 {{if not .Self.Component -}}</body>{{- end}}
-`)
+`)))
 
 // Body represents the HTML body.
 type Body struct {
@@ -29,22 +29,12 @@ type Body struct {
 	// As such, <body> will suppressed.
 	Component bool
 
-	tmpl *template.Template
-
 	pool sync.Pool
 }
 
-func (b *Body) compile() error {
-	var err error
-	b.tmpl, err = template.New("body").Parse(bodyTmpl)
-	if err != nil {
-		return fmt.Errorf("Body object had error: %s", err)
-	}
-
-	for _, element := range b.Elements {
-		if err := element.compile(); err != nil {
-			return err
-		}
+func (b *Body) Init() error {
+	if err := compileElements(b.Elements); err != nil {
+		return err
 	}
 
 	b.pool = sync.Pool{
@@ -63,7 +53,7 @@ func (b *Body) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = b
 
-	if err := b.tmpl.Execute(buff, pipe); err != nil {
+	if err := bodyTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

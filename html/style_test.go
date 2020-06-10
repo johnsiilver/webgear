@@ -37,7 +37,7 @@ text
 	}
 
 	for _, test := range tests {
-		if err := test.style.compile(); err != nil {
+		if err := test.style.Init(); err != nil {
 			panic(err)
 		}
 		got := test.style.Execute(Pipeline{})

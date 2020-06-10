@@ -1,18 +1,17 @@
 package html
 
 import (
-	"fmt"
 	"html/template"
 	"net/url"
 	"strings"
 	"sync"
 )
 
-var scriptTmpl = strings.TrimSpace(`
+var scriptTmpl = template.Must(template.New("script").Parse(strings.TrimSpace(`
 <script {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}}>
 	{{.Self.TagValue}}
 </script>
-`)
+`)))
 
 // Script represents an HTML script tag.
 type Script struct {
@@ -33,8 +32,6 @@ type Script struct {
 	// TagValue holds the value that is between the begin and ending tag. This should be a script of some type.
 	TagValue template.JS
 
-	tmpl *template.Template
-
 	pool sync.Pool
 }
 
@@ -45,13 +42,7 @@ func (s *Script) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (s *Script) compile() error {
-	var err error
-	s.tmpl, err = template.New("script").Parse(scriptTmpl)
-	if err != nil {
-		return fmt.Errorf("Script object had error: %s", err)
-	}
-
+func (s *Script) Init() error {
 	s.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -68,7 +59,7 @@ func (s *Script) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = s
 
-	if err := s.tmpl.Execute(buff, pipe); err != nil {
+	if err := scriptTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

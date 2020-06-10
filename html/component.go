@@ -15,11 +15,11 @@ type Attribute interface {
 	IsAttr()
 }
 
-var componenetTmpl = strings.TrimSpace(`
+var componenetTmpl = template.Must(template.New("component").Parse(strings.TrimSpace(`
 <{{.Self.TagType}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 	{{.Self.TagValue}}
 </{{.Self.TagType}}>
-`)
+`)))
 
 // Component is for providing custom componenets registered through the javascript window.customElements type.
 type Component struct {
@@ -37,8 +37,6 @@ type Component struct {
 
 	Events *Events
 
-	tmpl *template.Template
-
 	pool sync.Pool
 }
 
@@ -55,13 +53,7 @@ func (c *Component) validate() error {
 
 func (c *Component) isElement() {}
 
-func (c *Component) compile() error {
-	var err error
-	c.tmpl, err = template.New("c").Parse(componenetTmpl)
-	if err != nil {
-		return fmt.Errorf("Component object had error: %s", err)
-	}
-
+func (c *Component) Init() error {
 	c.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -77,7 +69,7 @@ func (c *Component) Execute(pipe Pipeline) html.HTML {
 
 	pipe.Self = c
 
-	if err := c.tmpl.Execute(buff, pipe); err != nil {
+	if err := componenetTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

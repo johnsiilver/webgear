@@ -27,7 +27,7 @@ func TestBase(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.base.compile(); err != nil {
+		if err := test.base.Init(); err != nil {
 			panic(err)
 		}
 		got := test.base.Execute(Pipeline{})

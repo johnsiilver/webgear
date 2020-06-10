@@ -16,7 +16,8 @@ func TestA(t *testing.T) {
 		{
 			desc: "Empty attributes",
 			a:    &A{},
-			want: "<a   ></a>",
+			want: `<a   >
+</a>`,
 		},
 		{
 			desc: "All attributes + 1 global + 1 event",
@@ -33,17 +34,22 @@ func TestA(t *testing.T) {
 				Rel:            AuthorRel,
 				Target:         BlankTarget,
 				Type:           "media",
-				TagValue:       TextElement("text"),
+				Elements:       []Element{TextElement("text")},
 				Events:         (&Events{}).OnError("handleError"),
 			},
 			want: `<a href="/subpage" download hreflang="english" media="query" ping="/reg" ` +
 				`referrerpolicy="origin" rel="author" target="_blank" type="media" accesskey="key" ` +
-				`onerror="handleError">text</a>`,
+				`onerror="handleError">
+	text
+</a>`,
 		},
 	}
 
 	for _, test := range tests {
-		if err := test.a.compile(); err != nil {
+		if err := test.a.Init(); err != nil {
+			panic(err)
+		}
+		if err := compileElement(test.a); err != nil {
 			panic(err)
 		}
 		got := test.a.Execute(Pipeline{})

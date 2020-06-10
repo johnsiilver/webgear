@@ -24,22 +24,28 @@ func TestLi(t *testing.T) {
 				},
 				Events: (&Events{}).OnError("handleError"),
 				Elements: []Element{
-					&A{Href: "/subpage", TagValue: TextElement("hello")},
+					&A{Href: "/subpage", Elements: []Element{TextElement("hello")}},
 				},
 			},
 
 			want: strings.TrimSpace(`
 <li accesskey="key" onerror="handleError">
-	<a href="/subpage"  >hello</a>
+	<a href="/subpage"  >
+	hello
+</a>
 </li>
 `),
 		},
 	}
 
 	for _, test := range tests {
-		if err := test.li.compile(); err != nil {
+		if err := test.li.Init(); err != nil {
 			panic(err)
 		}
+		if err := compileElement(test.li); err != nil {
+			panic(err)
+		}
+
 		got := test.li.Execute(Pipeline{})
 		if test.want != string(got) {
 			t.Errorf("TestLi(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)

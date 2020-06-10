@@ -8,9 +8,9 @@ import (
 	"sync"
 )
 
-var imgTmpl = strings.TrimSpace(`
+var imgTmpl = template.Must(template.New("img").Parse(strings.TrimSpace(`
 <img {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}/>
-`)
+`)))
 
 // Img details an image to be shown.
 type Img struct {
@@ -56,8 +56,6 @@ type Img struct {
 
 	Sizes string
 
-	tmpl *template.Template
-
 	pool sync.Pool
 }
 
@@ -99,13 +97,7 @@ func (i *Img) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (i *Img) compile() error {
-	var err error
-	i.tmpl, err = template.New("i").Parse(imgTmpl)
-	if err != nil {
-		return fmt.Errorf("Img object had error: %s", err)
-	}
-
+func (i *Img) Init() error {
 	i.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -121,7 +113,7 @@ func (i *Img) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = i
 
-	if err := i.tmpl.Execute(buff, pipe); err != nil {
+	if err := imgTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

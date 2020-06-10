@@ -7,9 +7,9 @@ import (
 	"sync"
 )
 
-var titleTmpl = strings.TrimSpace(`
+var titleTmpl = template.Must(template.New("title").Parse(strings.TrimSpace(`
 <title {{.Self.GlobalAttrs.Attr}}>{{.Self.TagValue}}</title>
-`)
+`)))
 
 // A defines a hyperlink, which is used to link from one page to another.
 type Title struct {
@@ -17,8 +17,6 @@ type Title struct {
 
 	// TagValue provides the value inside a reference.
 	TagValue TextElement
-
-	tmpl *template.Template
 
 	pool sync.Pool
 }
@@ -35,13 +33,7 @@ func (t *Title) validate() error {
 	return nil
 }
 
-func (t *Title) compile() error {
-	var err error
-	t.tmpl, err = template.New("title").Parse(titleTmpl)
-	if err != nil {
-		return fmt.Errorf("A object had error: %s", err)
-	}
-
+func (t *Title) Init() error {
 	t.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -58,7 +50,7 @@ func (t *Title) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = t
 
-	if err := t.tmpl.Execute(buff, pipe); err != nil {
+	if err := titleTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

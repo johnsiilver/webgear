@@ -14,13 +14,13 @@ import (
 	"github.com/yosssi/gohtml"
 )
 
-var docTmpl = strings.TrimSpace(`
+var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
 {{- if not .Self.Component}}<html>
 	{{.Self.Head.Execute .}}
 {{- end}}
 	{{.Self.Body.Execute .}}
 {{- if not .Self.Component}}</html>{{end}}
-`)
+`)))
 
 // Pipeline represents a template pipeline. The Self attribute is only usable internally, any other use is
 // not supported. Component is used only internally by the component pacakge, any other use is not supported.
@@ -28,6 +28,9 @@ var docTmpl = strings.TrimSpace(`
 type Pipeline struct {
 	// Req is the http.Request object for this call.
 	Req *http.Request
+	// W is the http.ResponseWriter. This can be used with the http.Error() call in the standard lib to
+	// indicate an error.
+	W http.ResponseWriter
 	// Self represents the data structure of the object that is executing the template. This allows
 	// a template to access attributes that represent a tag, such as A{} accessing Href for rendering.
 	// A user should not set this, as it is automatically changed by the various Element implementations.
@@ -49,19 +52,16 @@ type Doc struct {
 	Component bool
 
 	pool sync.Pool
-
-	tmpl *template.Template
 }
 
-// Compile compiles the Doc into a template for execution internally.  Must be called before Execute().
-// You only need to do this once.
-func (d *Doc) Compile() error {
+// Init sets up all the internals for execution.  Must be called before Execute(). You only need to do this once.
+func (d *Doc) Init() error {
 	if err := d.validate(); err != nil {
 		return err
 	}
 
 	if d.Head != nil {
-		if err := d.Head.compile(); err != nil {
+		if err := d.Head.Init(); err != nil {
 			return err
 		}
 	}
@@ -71,15 +71,10 @@ func (d *Doc) Compile() error {
 			d.Body.Component = true
 		}
 	}
-	if err := d.Body.compile(); err != nil {
+	if err := d.Body.Init(); err != nil {
 		return err
 	}
 
-	doc, err := template.New("doc").Parse(docTmpl)
-	if err != nil {
-		return err
-	}
-	d.tmpl = doc
 	d.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -91,17 +86,13 @@ func (d *Doc) Compile() error {
 
 // Execute executes the internal template and writes the output to the io.Writer.
 func (d *Doc) Execute(w io.Writer, pipe Pipeline) error {
-	if d.tmpl == nil {
-		return fmt.Errorf("must call Compile() before Execute() on Doc type")
-	}
-
 	pipe.Self = d
 
 	if d.Pretty {
-		return d.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "doc", pipe)
+		return docTmpl.ExecuteTemplate(gohtml.NewWriter(w), "doc", pipe)
 	}
 
-	return d.tmpl.ExecuteTemplate(w, "doc", pipe)
+	return docTmpl.ExecuteTemplate(w, "doc", pipe)
 }
 
 // Render calls execute execute and returns the string value.
@@ -125,20 +116,33 @@ func (d *Doc) validate() error {
 	return nil
 }
 
-// Element represents an HTML 5 element.
+// Element represents an object that can render self container HTML 5. Normally this is an HTML5 tag.
+// Users may implement this, but do so at their own risk as we can change the implementation without
+// changing the major version.
 type Element interface {
 	Execute(pipe Pipeline) template.HTML
-	compile() error
-	isElement()
 }
 
+// Initer is a type that requires Init() to be called before using.
+type Initer interface {
+	// Init initalizes the internal state.
+	Init() error
+}
+
+// outputAble details if a slice or struct should be output to when doing structToString.
 type outputAble interface {
 	outputAble()
 	fmt.Stringer
 }
 
+// raw details if a type should have its output from String() just shoved in without field names or anything.
+type raw interface {
+	isRaw()
+	fmt.Stringer
+}
+
 // DynamicFunc is a function that uses dynamic server data to return Elements that will be rendered.
-type DynamicFunc func() []Element
+type DynamicFunc func(pipe Pipeline) []Element
 
 type dynamic struct {
 	f    DynamicFunc
@@ -152,34 +156,31 @@ func (d *dynamic) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = d
 
-	for _, e := range d.f() {
+	elements := d.f(pipe)
+	compileElements(elements)
+	for _, e := range elements {
 		buff.WriteString(string(e.Execute(pipe)))
 	}
 	return template.HTML(buff.String())
 }
 
-func (d *dynamic) isElement() {}
-
-func (d *dynamic) compile() error {
-	return nil
-}
-
 // Dynamic wraps a DynamicFunc so that it implements Element.
 func Dynamic(f DynamicFunc) Element {
-	return &dynamic{f: f}
+	return &dynamic{
+		f: f,
+		pool: sync.Pool{
+			New: func() interface{} {
+				return &strings.Builder{}
+			},
+		},
+	}
 }
 
 // TextElement is an element that represents text, usually in a value. It is not valid everywhere.
 type TextElement string
 
-func (t TextElement) isElement() {}
-
 func (t TextElement) Execute(pipe Pipeline) template.HTML {
 	return template.HTML(t)
-}
-
-func (t TextElement) compile() error {
-	return nil
 }
 
 func (t TextElement) isZero() bool {
@@ -232,11 +233,21 @@ func structToString(i interface{}) string {
 		}
 
 		// Special value that we skip.
+		// TODO(johnsiilver): Not sure we still need this.
 		if name == "TagValue" {
 			continue
 		}
 
 		field := val.Field(i)
+
+		// This handles the case where we just want to put the raw output of the String() method.
+		if r, ok := field.Interface().(raw); ok {
+			o := r.String()
+			if o == "" {
+				continue
+			}
+			out = append(out, o)
+		}
 
 		// Retrieve the value.
 		var str string
@@ -296,10 +307,12 @@ func structToString(i interface{}) string {
 			}
 		}
 
+		// Handles when we want to add something like "px" or "em" to the end of a number.
 		if suffix := sf.Tag.Get("suffix"); suffix != "" {
 			str = str + suffix
 		}
 
+		// Naked is about if the attribute should be just a tag with no "=", like "sandbox" instead of "sandbox=".
 		if isNaked {
 			out = append(out, strings.ToLower(name))
 		} else {
@@ -308,6 +321,57 @@ func structToString(i interface{}) string {
 	}
 
 	return strings.Join(out, " ")
+}
+
+// compileElements compiles every Element passed and recursively all Elements contained in those Element(s).
+func compileElements(elements []Element) error {
+	for _, element := range elements {
+		if err := compileElement(element); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// compileElement complies the passed Element and ecursively all Elements contained in that Element.
+func compileElement(element Element) error {
+	if i, ok := element.(Initer); ok {
+		if err := i.Init(); err != nil {
+			return err
+		}
+	}
+
+	val := reflect.ValueOf(element)
+
+	// If it is *struct, get the struct and assign back to val.
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		return nil
+	}
+
+	t := val.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := val.Field(i)
+
+		if t.Field(i).Anonymous || !field.CanInterface() {
+			continue
+		}
+
+		switch real := field.Interface().(type) {
+		case Element:
+			if err := compileElement(real); err != nil {
+				return nil
+			}
+		case []Element:
+			if err := compileElements(real); err != nil {
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 // URLParse returns a *url.URL representation of "s". If it cannot be parsed, this will panic.

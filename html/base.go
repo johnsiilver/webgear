@@ -8,9 +8,9 @@ import (
 	"sync"
 )
 
-var baseTmpl = strings.TrimSpace(`
+var baseTmpl = template.Must(template.New("base").Parse(strings.TrimSpace(`
 <base {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}}>
-`)
+`)))
 
 // Base represents an HTML script tag.
 type Base struct {
@@ -21,8 +21,6 @@ type Base struct {
 
 	// Target specifies the default target for all hyperlinks and forms in the page.
 	Target string
-
-	tmpl *template.Template
 
 	pool sync.Pool
 }
@@ -41,13 +39,7 @@ func (b *Base) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (b *Base) compile() error {
-	var err error
-	b.tmpl, err = template.New("base").Parse(baseTmpl)
-	if err != nil {
-		return fmt.Errorf("Base object had error: %s", err)
-	}
-
+func (b *Base) Init() error {
 	b.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -62,7 +54,7 @@ func (b *Base) Execute(pipe Pipeline) template.HTML {
 	defer b.pool.Put(buff)
 	buff.Reset()
 
-	if err := b.tmpl.Execute(buff, Pipeline{Self: b}); err != nil {
+	if err := baseTmpl.Execute(buff, Pipeline{Self: b}); err != nil {
 		panic(err)
 	}
 

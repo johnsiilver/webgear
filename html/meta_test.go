@@ -46,7 +46,7 @@ func TestMeta(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.meta.compile(); err != nil {
+		if err := test.meta.Init(); err != nil {
 			panic(err)
 		}
 		got := test.meta.Execute(Pipeline{})

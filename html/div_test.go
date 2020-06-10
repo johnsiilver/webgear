@@ -24,20 +24,25 @@ func TestDiv(t *testing.T) {
 				},
 				Events: (&Events{}).OnError("handleError"),
 				Elements: []Element{
-					&A{Href: "/subpage", TagValue: TextElement("hello")},
+					&A{Href: "/subpage", Elements: []Element{TextElement("hello")}},
 				},
 			},
 
 			want: strings.TrimSpace(`
 <div accesskey="key" onerror="handleError">
-	<a href="/subpage"  >hello</a>
+	<a href="/subpage"  >
+	hello
+</a>
 </div>
 `),
 		},
 	}
 
 	for _, test := range tests {
-		if err := test.div.compile(); err != nil {
+		if err := test.div.Init(); err != nil {
+			panic(err)
+		}
+		if err := compileElement(test.div); err != nil {
 			panic(err)
 		}
 		got := test.div.Execute(Pipeline{})

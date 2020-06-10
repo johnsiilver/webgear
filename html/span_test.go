@@ -30,7 +30,7 @@ func TestSpan(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.span.compile(); err != nil {
+		if err := test.span.Init(); err != nil {
 			panic(err)
 		}
 		got := test.span.Execute(Pipeline{})

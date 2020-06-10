@@ -1,20 +1,19 @@
 package html
 
 import (
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
 )
 
-var pTmpl = strings.TrimSpace(`
+var pTmpl = template.Must(template.New("p").Parse(strings.TrimSpace(`
 <p {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
 </p>
-`)
+`)))
 
 // P tag defines a paragraph.
 type P struct {
@@ -22,8 +21,6 @@ type P struct {
 	Events *Events
 
 	Elements []Element
-
-	tmpl *template.Template
 
 	pool sync.Pool
 }
@@ -35,13 +32,7 @@ func (p *P) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (p *P) compile() error {
-	var err error
-	p.tmpl, err = template.New("p").Parse(pTmpl)
-	if err != nil {
-		return fmt.Errorf("P object had error: %s", err)
-	}
-
+func (p *P) Init() error {
 	p.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -57,7 +48,7 @@ func (p *P) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = p
 
-	if err := p.tmpl.Execute(buff, pipe); err != nil {
+	if err := pTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

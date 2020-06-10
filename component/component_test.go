@@ -1,13 +1,13 @@
 package component
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/johnsiilver/webgear/html"
 
 	"github.com/kylelemons/godebug/pretty"
-	"github.com/yosssi/gohtml"
 )
 
 func TestComponent(t *testing.T) {
@@ -20,13 +20,13 @@ func TestComponent(t *testing.T) {
 	}{
 		{
 			desc: "Success",
-			name: "myComponent",
+			name: "my-component",
 			doc: &html.Doc{
 				Body: &html.Body{
 					Elements: []html.Element{
 						&html.Div{
 							Elements: []html.Element{
-								&html.A{Href: "/self", TagValue: html.TextElement("link")},
+								&html.A{Href: "/self", Elements: []html.Element{html.TextElement("link")}},
 							},
 						},
 					},
@@ -35,12 +35,15 @@ func TestComponent(t *testing.T) {
 			want: strings.TrimSpace(`
 <template id=".Self.NameTemplate">
 	<div  >
-		<a href="/self"  >link</a>
+		<a href="/self"  >
+	link
+</a>
 	</div>
 </template>
 
 <script>
-	window.customElements.define('.Self.Name',
+	window.customElements.define(
+		'.Self.Name',
 		class extends HTMLElement {
 			constructor() {
 				super();
@@ -67,17 +70,19 @@ func TestComponent(t *testing.T) {
 			continue
 		}
 
-		got, err := g.Execute(html.Pipeline{})
+		h, err := g.Execute(html.Pipeline{})
 		if err != nil {
 			t.Errorf("TestComponent(%s).Execute(): got err == %s, want err == nil", test.desc, err)
 			continue
 		}
-		gotStr := gohtml.Format(string(got))
 
-		want := strings.ReplaceAll(test.want, ".Self.Name", g.Name())
-		want = gohtml.Format(want)
+		space := regexp.MustCompile(`\s+`)
+		got := strings.TrimSpace(space.ReplaceAllString(string(h), " "))
+		want := strings.TrimSpace(space.ReplaceAllString(string(test.want), " "))
 
-		if diff := pretty.Compare(want, gotStr); diff != "" {
+		want = strings.ReplaceAll(want, ".Self.Name", g.Name())
+
+		if diff := pretty.Compare(want, got); diff != "" {
 			t.Errorf("TestComponent(%s): -want/+got:\n%s", test.desc, diff)
 		}
 	}
