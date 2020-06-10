@@ -7,9 +7,9 @@ import (
 	"sync"
 )
 
-var metaTmpl = strings.TrimSpace(`
+var metaTmpl = template.Must(template.New("meta").Parse(strings.TrimSpace(`
 <meta {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}}>
-`)
+`)))
 
 type HTTPEquiv string
 
@@ -43,8 +43,6 @@ type Meta struct {
 
 	// Content specifies the value associated with the http-equiv or name attribute.
 	Content string
-
-	tmpl *template.Template
 
 	pool sync.Pool
 }
@@ -91,13 +89,7 @@ func (m *Meta) Attr() template.HTMLAttr {
 
 func (m *Meta) isElement() {}
 
-func (m *Meta) compile() error {
-	var err error
-	m.tmpl, err = template.New("m").Parse(metaTmpl)
-	if err != nil {
-		return fmt.Errorf("Meta object had error: %s", err)
-	}
-
+func (m *Meta) Init() error {
 	m.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -114,7 +106,7 @@ func (m *Meta) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = m
 
-	if err := m.tmpl.Execute(buff, pipe); err != nil {
+	if err := metaTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

@@ -1,10 +1,10 @@
 package html
 
 import (
-	"fmt"
 	"html/template"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 // LanguageCode is use to specify the language in use.
@@ -55,9 +55,14 @@ const (
 	TopTarget    = "_top"
 )
 
-var aTmpl = strings.TrimSpace(`
-<a {{.Self.Attr }} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>{{.Self.TagValue}}</a>
-`)
+var aTmpl = template.Must(template.New("a").Parse(strings.TrimSpace(`
+<a {{.Self.Attr }} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
+	{{- $data := .}}
+	{{- range .Self.Elements}}
+	{{.Execute $data}}
+	{{- end}}
+</a>
+`)))
 
 // A defines a hyperlink, which is used to link from one page to another.
 type A struct {
@@ -82,15 +87,11 @@ type A struct {
 
 	GlobalAttrs
 
-	// TagValue provides the value inside a reference. This can be another element such as a div, but most commonly
-	// it is TextElement.
-	TagValue Element
+	Elements []Element
 
 	Events *Events
 
-	tmpl *template.Template
-
-	str string
+	pool sync.Pool
 }
 
 func (a *A) Attr() template.HTMLAttr {
@@ -98,30 +99,26 @@ func (a *A) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (a *A) isElement() {}
-
-func (a *A) compile() error {
-	var err error
-	a.tmpl, err = template.New("a").Parse(aTmpl)
-	if err != nil {
-		return fmt.Errorf("A object had error: %s", err)
+func (a *A) Init() error {
+	a.pool = sync.Pool{
+		New: func() interface{} {
+			return &strings.Builder{}
+		},
 	}
 
 	return nil
 }
 
 func (a *A) Execute(pipe Pipeline) template.HTML {
-	if a.str != "" {
-		return template.HTML(a.str)
-	}
+	buff := a.pool.Get().(*strings.Builder)
+	defer a.pool.Put(buff)
+	buff.Reset()
+
 	pipe.Self = a
 
-	buff := strings.Builder{}
-
-	if err := a.tmpl.Execute(&buff, pipe); err != nil {
+	if err := aTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
-	a.str = buff.String()
-	return template.HTML(a.str)
+	return template.HTML(buff.String())
 }

@@ -1,20 +1,19 @@
 package html
 
 import (
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
 )
 
-var spanTmpl = strings.TrimSpace(`
+var spanTmpl = template.Must(template.New("span").Parse(strings.TrimSpace(`
 <span {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
 </span>
-`)
+`)))
 
 // Span tag is an inline container used to mark up a part of a text, or a part of a document.
 type Span struct {
@@ -25,20 +24,12 @@ type Span struct {
 
 	Events *Events
 
-	tmpl *template.Template
-
 	pool sync.Pool
 }
 
 func (s *Span) isElement() {}
 
-func (s *Span) compile() error {
-	var err error
-	s.tmpl, err = template.New("s").Parse(spanTmpl)
-	if err != nil {
-		return fmt.Errorf("Span object had error: %s", err)
-	}
-
+func (s *Span) Init() error {
 	s.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -52,7 +43,7 @@ func (s *Span) Execute(pipe Pipeline) template.HTML {
 	defer s.pool.Put(buff)
 	buff.Reset()
 
-	if err := s.tmpl.Execute(buff, Pipeline{Self: s}); err != nil {
+	if err := spanTmpl.Execute(buff, Pipeline{Self: s}); err != nil {
 		panic(err)
 	}
 

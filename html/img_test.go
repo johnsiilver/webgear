@@ -43,7 +43,7 @@ func TestImg(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.img.compile(); err != nil {
+		if err := test.img.Init(); err != nil {
 			panic(err)
 		}
 		got := test.img.Execute(Pipeline{})

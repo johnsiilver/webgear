@@ -1,20 +1,19 @@
 package html
 
 import (
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
 )
 
-var liTmpl = strings.TrimSpace(`
+var liTmpl = template.Must(template.New("li").Parse(strings.TrimSpace(`
 <li {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 	{{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
 	{{- end}}
 </li>
-`)
+`)))
 
 // Li defines an HTML li tag.
 type Li struct {
@@ -23,25 +22,12 @@ type Li struct {
 
 	Elements []Element
 
-	tmpl *template.Template
 	pool sync.Pool
 }
 
 func (l *Li) isElement() {}
 
-func (l *Li) compile() error {
-	var err error
-	l.tmpl, err = template.New("li").Parse(liTmpl)
-	if err != nil {
-		return fmt.Errorf("Ul object had error: %s", err)
-	}
-
-	for _, element := range l.Elements {
-		if err := element.compile(); err != nil {
-			return err
-		}
-	}
-
+func (l *Li) Init() error {
 	l.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -57,7 +43,7 @@ func (l *Li) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = l
 
-	if err := l.tmpl.Execute(buff, pipe); err != nil {
+	if err := liTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

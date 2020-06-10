@@ -46,7 +46,7 @@ func TestLink(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.link.compile(); err != nil {
+		if err := test.link.Init(); err != nil {
 			panic(err)
 		}
 		got := test.link.Execute(Pipeline{})

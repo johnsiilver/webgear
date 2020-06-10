@@ -39,7 +39,7 @@ func TestScript(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.script.compile(); err != nil {
+		if err := test.script.Init(); err != nil {
 			panic(err)
 		}
 		got := test.script.Execute(Pipeline{})

@@ -7,11 +7,11 @@ import (
 	"sync"
 )
 
-var styleTmpl = strings.TrimSpace(`
+var styleTmpl = template.Must(template.New("style").Parse(strings.TrimSpace(`
 <style {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 {{.Self.TagValue}}
 </style>
-`)
+`)))
 
 // Style defines an HTML style tag.
 type Style struct {
@@ -21,8 +21,6 @@ type Style struct {
 	TagValue TextElement
 
 	Events *Events
-
-	tmpl *template.Template
 
 	pool sync.Pool
 }
@@ -44,13 +42,7 @@ func (s *Style) Attr() template.HTMLAttr {
 
 func (s *Style) isElement() {}
 
-func (s *Style) compile() error {
-	var err error
-	s.tmpl, err = template.New("s").Parse(styleTmpl)
-	if err != nil {
-		return fmt.Errorf("Style object had error: %s", err)
-	}
-
+func (s *Style) Init() error {
 	s.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -66,7 +58,7 @@ func (s *Style) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = s
 
-	if err := s.tmpl.Execute(buff, pipe); err != nil {
+	if err := styleTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

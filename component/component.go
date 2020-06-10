@@ -18,7 +18,8 @@ var gearTmpl = strings.TrimSpace(`
 </template>
 
 <script>
-	window.customElements.define('{{.Self.Name}}',
+  window.customElements.define(
+		'{{.Self.Name}}',
 		class extends HTMLElement {
 			constructor() {
 				super();
@@ -57,16 +58,21 @@ func New(name string, doc *html.Doc, gears []*Gear) (*Gear, error) {
 		return nil, fmt.Errorf("must provide a name for the Gear")
 	}
 
+	if !strings.Contains(name, "-") {
+		return nil, fmt.Errorf("a componenent name must have a - in it, don't blame me, blame the spec")
+	}
+
 	doc.Component = true
 	doc.Pretty = false // If they want pretty, they need to set it in the Gear.
 
-	if err := doc.Compile(); err != nil {
+	if err := doc.Init(); err != nil {
 		return nil, err
 	}
 
 	g := Gear{
-		Doc:  doc,
-		name: name,
+		Doc:   doc,
+		gears: gears,
+		name:  name,
 		pool: sync.Pool{
 			New: func() interface{} {
 				return &strings.Builder{}
@@ -117,13 +123,13 @@ func (g *Gear) Execute(pipe html.Pipeline) (template.HTML, error) {
 		w.WriteString(string(h))
 	}
 
-	if g.Pretty {
-		err = g.tmpl.ExecuteTemplate(gohtml.NewWriter(w), "gear", pipe)
-	} else {
-		err = g.tmpl.ExecuteTemplate(w, "gear", pipe)
-	}
+	err = g.tmpl.ExecuteTemplate(w, "gear", pipe)
 	if err != nil {
 		return "", err
+	}
+
+	if g.Pretty {
+		return template.HTML(gohtml.Format(w.String())), nil
 	}
 	return template.HTML(w.String()), nil
 }

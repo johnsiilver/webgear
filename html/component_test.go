@@ -31,7 +31,7 @@ func TestComponent(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.component.compile(); err != nil {
+		if err := test.component.Init(); err != nil {
 			panic(err)
 		}
 		got := test.component.Execute(Pipeline{})

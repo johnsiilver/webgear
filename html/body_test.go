@@ -26,7 +26,7 @@ func TestBody(t *testing.T) {
 				Elements: []Element{
 					&Div{
 						Elements: []Element{
-							&A{Href: "/subpage", TagValue: TextElement("hello")},
+							&A{Href: "/subpage", Elements: []Element{TextElement("hello")}},
 						},
 					},
 				},
@@ -35,7 +35,9 @@ func TestBody(t *testing.T) {
 			want: strings.TrimSpace(`
 <body accesskey="key" onerror="handleError">
 	<div  >
-	<a href="/subpage"  >hello</a>
+	<a href="/subpage"  >
+	hello
+</a>
 </div>
 </body>
 `),
@@ -43,7 +45,7 @@ func TestBody(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.body.compile(); err != nil {
+		if err := test.body.Init(); err != nil {
 			panic(err)
 		}
 		got := test.body.Execute(Pipeline{})

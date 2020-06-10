@@ -32,7 +32,7 @@ func TestTitle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.title.compile(); err != nil {
+		if err := test.title.Init(); err != nil {
 			panic(err)
 		}
 		got := test.title.Execute(Pipeline{})

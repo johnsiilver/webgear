@@ -7,13 +7,13 @@ import (
 	"sync"
 )
 
-var headTmpl = strings.TrimSpace(`
+var headTmpl = template.Must(template.New("head").Parse(strings.TrimSpace(`
 <head {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 	{{- range .Self.Elements}}
 	{{.Execute .}}
 	{{- end}}
 </head>
-`)
+`)))
 
 // Head represents an HTML head tag.
 type Head struct {
@@ -25,8 +25,6 @@ type Head struct {
 	Events *Events
 
 	pool sync.Pool
-
-	tmpl *template.Template
 }
 
 func (h *Head) validate() error {
@@ -58,17 +56,9 @@ func (h *Head) validate() error {
 	return nil
 }
 
-func (h *Head) compile() error {
-	var err error
-	h.tmpl, err = template.New("head").Parse(headTmpl)
-	if err != nil {
-		return fmt.Errorf("Head object had error: %s", err)
-	}
-
-	for _, element := range h.Elements {
-		if err := element.compile(); err != nil {
-			return err
-		}
+func (h *Head) Init() error {
+	if err := compileElements(h.Elements); err != nil {
+		return err
 	}
 
 	h.pool = sync.Pool{
@@ -87,7 +77,7 @@ func (h *Head) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = h
 
-	if err := h.tmpl.Execute(buff, pipe); err != nil {
+	if err := headTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 

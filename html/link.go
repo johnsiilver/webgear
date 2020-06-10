@@ -57,9 +57,9 @@ func (s Sizes) isZero() bool {
 	return false
 }
 
-var linkTmpl = strings.TrimSpace(`
+var linkTmpl = template.Must(template.New("link").Parse(strings.TrimSpace(`
 <link {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}}>
-`)
+`)))
 
 // Link defines an HTML link tag.
 type Link struct {
@@ -87,8 +87,6 @@ type Link struct {
 	// Type specifies the media type of the linked document.
 	Type string
 
-	tmpl *template.Template
-
 	pool sync.Pool
 }
 
@@ -115,13 +113,7 @@ func (l *Link) Attr() template.HTMLAttr {
 
 func (l *Link) isElement() {}
 
-func (l *Link) compile() error {
-	var err error
-	l.tmpl, err = template.New("l").Parse(linkTmpl)
-	if err != nil {
-		return fmt.Errorf("Link object had error: %s", err)
-	}
-
+func (l *Link) Init() error {
 	l.pool = sync.Pool{
 		New: func() interface{} {
 			return &strings.Builder{}
@@ -138,7 +130,7 @@ func (l *Link) Execute(pipe Pipeline) template.HTML {
 
 	pipe.Self = l
 
-	if err := l.tmpl.Execute(buff, pipe); err != nil {
+	if err := linkTmpl.Execute(buff, pipe); err != nil {
 		panic(err)
 	}
 
