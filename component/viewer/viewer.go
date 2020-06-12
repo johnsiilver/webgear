@@ -1,3 +1,40 @@
+/*
+Package viewer provides a library to make rendering just your component a snap so that it is easy to view visual
+changes quickly without loading up an entire website. As the styles are contained within the component, this should
+allow changes to be tested locally instead of within context of a larger page.
+
+Usage:
+	var (
+		port = flag.Int("port", 8080, "The port to run the server on")
+	)
+
+	func main() {
+		// Some test data to show.
+		conf := &config.VideoFiles{
+			&config.VideoFile{
+				Index: 0,
+				Name:  "Grand Tetons",
+				URL:   "https://vimeo.com/19777306",
+			},
+		}
+
+		// Create component with test data.
+		nav, err := nav.New("nav-component", conf, nil)
+		if err != nil {
+			panic(err)
+		}
+
+		// Render it to 127.0.0.1:8080
+		v := viewer.New(
+			*port,
+			nav,
+			viewer.BackgroundColor("black"),
+			viewer.ServeOtherFiles("../../../", []string{".css", ".jpg", ".svg", ".png"}),
+		)
+
+		v.Run()
+	}
+*/
 package viewer
 
 import (
