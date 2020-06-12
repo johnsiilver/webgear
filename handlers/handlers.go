@@ -67,6 +67,10 @@ func (m *Mux) ServerMux() http.Handler {
 // Handle registers the doc for a given pattern. If a handler already exists for pattern, Handle panics.
 // All handles will be gzip compressed by default.
 func (m *Mux) Handle(pattern string, doc *html.Doc) error {
+	if err := doc.Init(); err != nil {
+		return err
+	}
+
 	m.mux.Handle(
 		pattern,
 		http.HandlerFunc(

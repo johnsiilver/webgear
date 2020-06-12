@@ -139,10 +139,11 @@ func (d *Doc) Init() error {
 }
 
 // Execute executes the internal templates and writes the output to the io.Writer. This is thread-safe.
-func (d *Doc) Execute(ctx context.Context, w io.Writer, r *http.Request) error {
+func (d *Doc) Execute(ctx context.Context, w io.Writer, r *http.Request) (err error) {
 	defer func() {
-		if r := recover(); r != nil {
-			log.Println(r)
+		if rec := recover(); rec != nil {
+			err = fmt.Errorf("%v", rec)
+			return
 		}
 	}()
 
