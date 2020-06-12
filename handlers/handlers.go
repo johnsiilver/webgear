@@ -1,4 +1,37 @@
-// Package handlers provides handlers which can execute pages defined in the webgear package.
+/*
+Package handlers provides http.Handler(s) which can execute pages defined in the webgear package.  All data is
+returned gzip compressed.
+
+Usage is as follows:
+	// Create new handlers.Mux object with an option to tell clients not to cache results.
+	h := handlers.New(handlers.DoNotCache())
+
+	// Serve all files from the the binary working directory and below it (recursively) that have
+	// the file extensions listed.
+	h.ServeFilesWorkingDir([]string{".css", ".jpg", ".svg", ".png"})
+
+	// Create a *html.Doc object that we want to serve from "/".
+	index, err := index.New(conf)
+	if err != nil {
+		panic(err)
+	}
+
+	// Attach that object to /.
+	h.MustHandle("/", index)
+
+	// Serve the content using the http.Server.
+	server := &http.Server{
+		Addr:           fmt.Sprintf(":%d", *port),
+		Handler:        h.ServerMux(),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	log.Printf("http server serving on :%d", *port)
+
+	log.Fatal(server.ListenAndServe())
+*/
 package handlers
 
 import (

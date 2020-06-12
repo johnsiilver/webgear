@@ -1,4 +1,67 @@
-// Package component provides a Gear, which represents an HTML shadow-dom component.
+/*
+Package component provides a Gear, which represents an HTML shadow-dom component. This allows creation of isolated
+HTML components using the "html" package.
+
+Simply attach an *html.Doc element with a .Body and no .Head. This will be automatically isolated from other css
+styles in the top level document.  The component tag name will be the name you pass along in the constructor and you
+can access this component in your main document via the html.Component{} object.
+
+Example usage:
+	// Create doc that will be used by the Gear.
+	gearDoc := &html.Doc{
+		Body: &html.Body{
+			Elements: []html.Element{
+				&html.Link{Rel: "stylesheet", Href: "/static/main/gear.css"},
+				html.TextElement("John Doak"),
+			},
+		},
+	}
+
+	// Create the Gear.
+	gear, err := New("printname-component", gearDoc)
+	if err != nil {
+		return err
+	}
+
+	// Use the Gear in your index page. This is usually not in the same place as the component.
+	doc := &html.Doc{
+		Head: &html.Head{
+			&html.Meta{Charset: "UTF-8"},
+			&html.Title{TagValue: html.TextElement("My site showing my name")},
+			&html.Link{Rel: "stylesheet", Href: html.URLParse("/static/main/index.css")},
+			&html.Link{Href: html.URLParse("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"), Rel: "stylesheet"},
+		},
+		Body: &html.Body{
+			Elements: []html.Element{
+				gear, // This causes the code to render.
+				&html.Component{TagType: template.HTMLAttr(gear.Name())},
+			},
+		},
+	},
+
+	// Setup server handlers.
+	h := handlers.New(handlers.DoNotCache())
+
+	// Serve all files from the the binary working directory and below it (recursively) that have
+	// the file extensions listed.
+	h.ServeFilesWorkingDir([]string{".css", ".jpg", ".svg", ".png"})
+
+	// Attach our page containing the gear to "/".
+	h.MustHandle("/", doc)
+
+	// Serve the content using the http.Server.
+	server := &http.Server{
+		Addr:           fmt.Sprintf(":%d", *port),
+		Handler:        h.ServerMux(),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	log.Printf("http server serving on :%d", *port)
+
+	log.Fatal(server.ListenAndServe())
+*/
 package component
 
 import (

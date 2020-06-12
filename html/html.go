@@ -1,3 +1,81 @@
+/*
+Package html provide objects reprsenting HTML 5 tags that can be joined into a *Doc object and rendered.
+It provides support for attaching event objects and dynamic content.
+
+Note: It does not currently contain all tags in HTML 5.  These will be slowly added.
+
+Basic Usage:
+	// Create a page with basic header information that links to a stylesheet and prints "Hello World".
+	doc := &html.Doc{
+		Head: &html.Head{
+			Elements: []html.Element{
+				&html.Meta{Charset: "UTF-8"},
+				&html.Title{TagValue: html.TextElement("Simple Example")},
+				&html.Link{Rel: "stylesheet", Href: html.URLParse("/static/index.css")},
+				&html.Link{Href: html.URLParse("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"), Rel: "stylesheet"},
+			},
+		},
+		Body: &html.Body{
+			Elements: []html.Element{
+				html.TextElement("Hello World")
+			},
+		},
+	}
+
+	// To serve the page, see the handlers/ package.
+
+Serve Dynamic Content:
+	// site represents a name of a site and a url to that site.
+	type site struct {
+		name string
+		url *url.URL
+	}
+
+	// sites is used to implement html.DynamicFunc.
+	type sites struct {
+		sites []site
+	}
+
+	// List implements html.DynamicFunc to take a list of sites and display links to them.
+	func (s sites) List(pipe Pipeline) []html.Element {
+		elements := []html.Element{}
+
+		for _, site := range s.sites {
+			elements = append(
+				elements,
+				&html.A{Href: url.String(), Elements: []html.Element(html.TextElement(site.name))},
+			)
+		}
+		return elements
+	}
+
+	// Create a page with basic header information that links to a stylesheet and prints "Hello World".
+	doc := &html.Doc{
+		Head: &html.Head{
+			Elements: []html.Element{
+				&html.Meta{Charset: "UTF-8"},
+				&html.Title{TagValue: html.TextElement("Dyanic Example")},
+				&html.Link{Rel: "stylesheet", Href: html.URLParse("/static/index.css")},
+				&html.Link{Href: html.URLParse("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"), Rel: "stylesheet"},
+			},
+		},
+		Body: &html.Body{
+			Elements: []html.Element{
+				html.Dynamic(
+					sites{
+						sites: []site{
+							{"Microsoft", html.URLParse("www.microsoft.com")},
+							{"Google", html.URLParse("www.google.com")},
+							{"LucasFilm", html.URLParse("www.lucasfilm.com")},
+						}
+					},
+				),
+			},
+		},
+	}
+
+	// To serve the page, see the handlers/ package.
+*/
 package html
 
 import (
