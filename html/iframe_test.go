@@ -1,6 +1,7 @@
 package html
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -38,11 +39,10 @@ func TestIFrame(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.iframe.Init(); err != nil {
-			panic(err)
-		}
-		got := test.iframe.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.iframe.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestIFrame(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

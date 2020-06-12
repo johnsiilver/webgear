@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 // LanguageCode is use to specify the language in use.
@@ -90,8 +89,6 @@ type A struct {
 	Elements []Element
 
 	Events *Events
-
-	pool sync.Pool
 }
 
 func (a *A) Attr() template.HTMLAttr {
@@ -99,26 +96,12 @@ func (a *A) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (a *A) Init() error {
-	a.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
-	return nil
-}
-
-func (a *A) Execute(pipe Pipeline) template.HTML {
-	buff := a.pool.Get().(*strings.Builder)
-	defer a.pool.Put(buff)
-	buff.Reset()
-
+func (a *A) Execute(pipe Pipeline) string {
 	pipe.Self = a
 
-	if err := aTmpl.Execute(buff, pipe); err != nil {
+	if err := aTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

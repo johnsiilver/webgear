@@ -1,6 +1,7 @@
 package html
 
 import (
+	"context"
 	"net/url"
 	"strings"
 	"testing"
@@ -43,11 +44,10 @@ func TestImg(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.img.Init(); err != nil {
-			panic(err)
-		}
-		got := test.img.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.img.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestImg(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

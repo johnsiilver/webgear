@@ -3,7 +3,6 @@ package html
 import (
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var spanTmpl = template.Must(template.New("span").Parse(strings.TrimSpace(`
@@ -23,29 +22,14 @@ type Span struct {
 	Elements []Element
 
 	Events *Events
-
-	pool sync.Pool
 }
 
-func (s *Span) isElement() {}
+func (s *Span) Execute(pipe Pipeline) string {
+	pipe.Self = s
 
-func (s *Span) Init() error {
-	s.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-	return nil
-}
-
-func (s *Span) Execute(pipe Pipeline) template.HTML {
-	buff := s.pool.Get().(*strings.Builder)
-	defer s.pool.Put(buff)
-	buff.Reset()
-
-	if err := spanTmpl.Execute(buff, Pipeline{Self: s}); err != nil {
+	if err := spanTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 var baseTmpl = template.Must(template.New("base").Parse(strings.TrimSpace(`
@@ -21,8 +20,6 @@ type Base struct {
 
 	// Target specifies the default target for all hyperlinks and forms in the page.
 	Target string
-
-	pool sync.Pool
 }
 
 func (b *Base) isElement() {}
@@ -39,24 +36,11 @@ func (b *Base) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (b *Base) Init() error {
-	b.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
+func (b *Base) Execute(pipe Pipeline) string {
 
-	return nil
-}
-
-func (b *Base) Execute(pipe Pipeline) template.HTML {
-	buff := b.pool.Get().(*strings.Builder)
-	defer b.pool.Put(buff)
-	buff.Reset()
-
-	if err := baseTmpl.Execute(buff, Pipeline{Self: b}); err != nil {
+	if err := baseTmpl.Execute(pipe.W, Pipeline{Self: b}); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

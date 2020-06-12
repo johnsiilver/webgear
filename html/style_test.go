@@ -1,6 +1,8 @@
 package html
 
 import (
+	"context"
+	"html/template"
 	"strings"
 	"testing"
 )
@@ -26,7 +28,7 @@ func TestStyle(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				TagValue: TextElement("text"),
+				TagValue: template.CSS("text"),
 				Events:   (&Events{}).OnError("handleError"),
 			},
 			want: strings.TrimSpace(
@@ -37,11 +39,10 @@ text
 	}
 
 	for _, test := range tests {
-		if err := test.style.Init(); err != nil {
-			panic(err)
-		}
-		got := test.style.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.style.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestStyle(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

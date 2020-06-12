@@ -3,7 +3,6 @@ package html
 import (
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var ulTmpl = template.Must(template.New("ul").Parse(strings.TrimSpace(`
@@ -21,31 +20,14 @@ type Ul struct {
 	Events *Events
 
 	Elements []Element
-
-	pool sync.Pool
 }
 
-func (u *Ul) isElement() {}
-
-func (u *Ul) Init() error {
-	u.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-	return nil
-}
-
-func (u *Ul) Execute(pipe Pipeline) template.HTML {
-	buff := u.pool.Get().(*strings.Builder)
-	defer u.pool.Put(buff)
-	buff.Reset()
-
+func (u *Ul) Execute(pipe Pipeline) string {
 	pipe.Self = u
 
-	if err := ulTmpl.Execute(buff, pipe); err != nil {
+	if err := ulTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

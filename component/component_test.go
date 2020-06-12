@@ -1,6 +1,7 @@
 package component
 
 import (
+	"context"
 	"regexp"
 	"strings"
 	"testing"
@@ -47,7 +48,7 @@ func TestComponent(t *testing.T) {
 		class extends HTMLElement {
 			constructor() {
 				super();
-				let template = document.getElementById('.Self.Name');
+				let template = document.getElementById('.Self.NameTemplate');
 				let templateContent = template.content;
 
 				const shadowRoot = this.attachShadow({mode: 'open'}).appendChild(templateContent.cloneNode(true));
@@ -60,7 +61,7 @@ func TestComponent(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		g, err := New(test.name, test.doc, nil)
+		g, err := New(test.name, test.doc)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestComponent(%s): got err == nil, want err != nil", test.desc)
@@ -70,14 +71,17 @@ func TestComponent(t *testing.T) {
 			continue
 		}
 
-		h, err := g.Execute(html.Pipeline{})
-		if err != nil {
+		build := &strings.Builder{}
+		pipe := html.NewPipeline(context.Background(), nil, build)
+
+		g.Execute(pipe)
+		if err := pipe.HadError(); err != nil {
 			t.Errorf("TestComponent(%s).Execute(): got err == %s, want err == nil", test.desc, err)
 			continue
 		}
 
 		space := regexp.MustCompile(`\s+`)
-		got := strings.TrimSpace(space.ReplaceAllString(string(h), " "))
+		got := strings.TrimSpace(space.ReplaceAllString(string(build.String()), " "))
 		want := strings.TrimSpace(space.ReplaceAllString(string(test.want), " "))
 
 		want = strings.ReplaceAll(want, ".Self.Name", g.Name())

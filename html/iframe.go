@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 var iframeTmpl = template.Must(template.New("iframe").Parse(strings.TrimSpace(`
@@ -71,8 +70,6 @@ type IFrame struct {
 	Sandboxing Sandboxing
 
 	Events *Events
-
-	pool sync.Pool
 }
 
 func (i *IFrame) validate() error {
@@ -82,31 +79,17 @@ func (i *IFrame) validate() error {
 	return nil
 }
 
-func (i *IFrame) Init() error {
-	i.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
-	return nil
-}
-
 func (i *IFrame) Attr() template.HTMLAttr {
 	output := structToString(i)
 	return template.HTMLAttr(output)
 }
 
-func (i *IFrame) Execute(pipe Pipeline) template.HTML {
-	buff := i.pool.Get().(*strings.Builder)
-	defer i.pool.Put(buff)
-	buff.Reset()
-
+func (i *IFrame) Execute(pipe Pipeline) string {
 	pipe.Self = i
 
-	if err := iframeTmpl.Execute(buff, pipe); err != nil {
+	if err := iframeTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

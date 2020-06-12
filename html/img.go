@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 var imgTmpl = template.Must(template.New("img").Parse(strings.TrimSpace(`
@@ -55,8 +54,6 @@ type Img struct {
 	ReferrerPolicy ReferrerPolicy
 
 	Sizes string
-
-	pool sync.Pool
 }
 
 func (i *Img) validate() error {
@@ -90,32 +87,17 @@ func (i *Img) validate() error {
 	return nil
 }
 
-func (i *Img) isElement() {}
-
 func (i *Img) Attr() template.HTMLAttr {
 	output := structToString(i)
 	return template.HTMLAttr(output)
 }
 
-func (i *Img) Init() error {
-	i.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-	return nil
-}
-
-func (i *Img) Execute(pipe Pipeline) template.HTML {
-	buff := i.pool.Get().(*strings.Builder)
-	defer i.pool.Put(buff)
-	buff.Reset()
-
+func (i *Img) Execute(pipe Pipeline) string {
 	pipe.Self = i
 
-	if err := imgTmpl.Execute(buff, pipe); err != nil {
+	if err := imgTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var headTmpl = template.Must(template.New("head").Parse(strings.TrimSpace(`
 <head {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
+	{{$data := .}}
 	{{- range .Self.Elements}}
-	{{.Execute .}}
+	{{.Execute $data}}
 	{{- end}}
 </head>
 `)))
@@ -23,8 +23,6 @@ type Head struct {
 	Elements []Element
 
 	Events *Events
-
-	pool sync.Pool
 }
 
 func (h *Head) validate() error {
@@ -61,25 +59,15 @@ func (h *Head) Init() error {
 		return err
 	}
 
-	h.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
 	return nil
 }
 
-func (h *Head) Execute(pipe Pipeline) template.HTML {
-	buff := h.pool.Get().(*strings.Builder)
-	defer h.pool.Put(buff)
-	buff.Reset()
-
+func (h *Head) Execute(pipe Pipeline) string {
 	pipe.Self = h
 
-	if err := headTmpl.Execute(buff, pipe); err != nil {
+	if err := headTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

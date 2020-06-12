@@ -1,6 +1,7 @@
 package html
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -39,15 +40,10 @@ func TestLi(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.li.Init(); err != nil {
-			panic(err)
-		}
-		if err := compileElement(test.li); err != nil {
-			panic(err)
-		}
-
-		got := test.li.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.li.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestLi(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

@@ -3,7 +3,6 @@ package html
 import (
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var liTmpl = template.Must(template.New("li").Parse(strings.TrimSpace(`
@@ -21,31 +20,14 @@ type Li struct {
 	Events *Events
 
 	Elements []Element
-
-	pool sync.Pool
 }
 
-func (l *Li) isElement() {}
-
-func (l *Li) Init() error {
-	l.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-	return nil
-}
-
-func (l *Li) Execute(pipe Pipeline) template.HTML {
-	buff := l.pool.Get().(*strings.Builder)
-	defer l.pool.Put(buff)
-	buff.Reset()
-
+func (l *Li) Execute(pipe Pipeline) string {
 	pipe.Self = l
 
-	if err := liTmpl.Execute(buff, pipe); err != nil {
+	if err := liTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

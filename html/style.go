@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var styleTmpl = template.Must(template.New("style").Parse(strings.TrimSpace(`
@@ -18,15 +17,13 @@ type Style struct {
 	GlobalAttrs
 
 	// TagValue provides the value inside a reference.
-	TagValue TextElement
+	TagValue template.CSS
 
 	Events *Events
-
-	pool sync.Pool
 }
 
 func (s *Style) validate() error {
-	if s.TagValue.isZero() {
+	if s.TagValue == "" {
 		return fmt.Errorf("Style element cannot have a nil TagValue")
 	}
 	if strings.TrimSpace(string(s.TagValue)) == "" {
@@ -40,27 +37,12 @@ func (s *Style) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (s *Style) isElement() {}
-
-func (s *Style) Init() error {
-	s.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-	return nil
-}
-
-func (s *Style) Execute(pipe Pipeline) template.HTML {
-	buff := s.pool.Get().(*strings.Builder)
-	defer s.pool.Put(buff)
-	buff.Reset()
-
+func (s *Style) Execute(pipe Pipeline) string {
 	pipe.Self = s
 
-	if err := styleTmpl.Execute(buff, pipe); err != nil {
+	if err := styleTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

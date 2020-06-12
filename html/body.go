@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var bodyTmpl = template.Must(template.New("body").Parse(strings.TrimSpace(`
@@ -28,8 +27,6 @@ type Body struct {
 	// Componenet is used to indicate that this is a snippet of code, not a full document.
 	// As such, <body> will suppressed.
 	Component bool
-
-	pool sync.Pool
 }
 
 func (b *Body) Init() error {
@@ -37,27 +34,17 @@ func (b *Body) Init() error {
 		return err
 	}
 
-	b.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
 	return nil
 }
 
-func (b *Body) Execute(pipe Pipeline) template.HTML {
-	buff := b.pool.Get().(*strings.Builder)
-	defer b.pool.Put(buff)
-	buff.Reset()
-
+func (b *Body) Execute(pipe Pipeline) string {
 	pipe.Self = b
 
-	if err := bodyTmpl.Execute(buff, pipe); err != nil {
+	if err := bodyTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }
 
 func (b *Body) validate() error {
