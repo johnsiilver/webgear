@@ -41,16 +41,12 @@ func (p *P) Init() error {
 	return nil
 }
 
-func (p *P) Execute(pipe Pipeline) template.HTML {
-	buff := p.pool.Get().(*strings.Builder)
-	defer p.pool.Put(buff)
-	buff.Reset()
-
+func (p *P) Execute(pipe Pipeline) string {
 	pipe.Self = p
 
-	if err := pTmpl.Execute(buff, pipe); err != nil {
+	if err := pTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

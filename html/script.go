@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 var scriptTmpl = template.Must(template.New("script").Parse(strings.TrimSpace(`
@@ -31,37 +30,19 @@ type Script struct {
 
 	// TagValue holds the value that is between the begin and ending tag. This should be a script of some type.
 	TagValue template.JS
-
-	pool sync.Pool
 }
-
-func (s *Script) isElement() {}
 
 func (s *Script) Attr() template.HTMLAttr {
 	output := structToString(s)
 	return template.HTMLAttr(output)
 }
 
-func (s *Script) Init() error {
-	s.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
-	return nil
-}
-
-func (s *Script) Execute(pipe Pipeline) template.HTML {
-	buff := s.pool.Get().(*strings.Builder)
-	defer s.pool.Put(buff)
-	buff.Reset()
-
+func (s *Script) Execute(pipe Pipeline) string {
 	pipe.Self = s
 
-	if err := scriptTmpl.Execute(buff, pipe); err != nil {
+	if err := scriptTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

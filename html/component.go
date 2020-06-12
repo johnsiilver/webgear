@@ -3,7 +3,6 @@ package html
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"text/template"
 
 	html "html/template"
@@ -36,8 +35,6 @@ type Component struct {
 	TagValue Element
 
 	Events *Events
-
-	pool sync.Pool
 }
 
 func (c *Component) validate() error {
@@ -53,25 +50,12 @@ func (c *Component) validate() error {
 
 func (c *Component) isElement() {}
 
-func (c *Component) Init() error {
-	c.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-	return nil
-}
-
-func (c *Component) Execute(pipe Pipeline) html.HTML {
-	buff := c.pool.Get().(*strings.Builder)
-	defer c.pool.Put(buff)
-	buff.Reset()
-
+func (c *Component) Execute(pipe Pipeline) string {
 	pipe.Self = c
 
-	if err := componenetTmpl.Execute(buff, pipe); err != nil {
+	if err := componenetTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return html.HTML(buff.String())
+	return EmptyString
 }

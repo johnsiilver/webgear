@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"sync"
 )
 
 type CrossOrigin string
@@ -86,8 +85,6 @@ type Link struct {
 
 	// Type specifies the media type of the linked document.
 	Type string
-
-	pool sync.Pool
 }
 
 func (l *Link) validate() error {
@@ -111,28 +108,12 @@ func (l *Link) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (l *Link) isElement() {}
-
-func (l *Link) Init() error {
-	l.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
-	return nil
-}
-
-func (l *Link) Execute(pipe Pipeline) template.HTML {
-	buff := l.pool.Get().(*strings.Builder)
-	defer l.pool.Put(buff)
-	buff.Reset()
-
+func (l *Link) Execute(pipe Pipeline) string {
 	pipe.Self = l
 
-	if err := linkTmpl.Execute(buff, pipe); err != nil {
+	if err := linkTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

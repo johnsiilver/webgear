@@ -1,6 +1,7 @@
 package html
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -30,11 +31,10 @@ func TestSpan(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.span.Init(); err != nil {
-			panic(err)
-		}
-		got := test.span.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.span.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestSpan(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

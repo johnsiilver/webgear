@@ -1,7 +1,9 @@
 package html
 
 import (
+	"context"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -46,11 +48,10 @@ func TestLink(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.link.Init(); err != nil {
-			panic(err)
-		}
-		got := test.link.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.link.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestLink(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var titleTmpl = template.Must(template.New("title").Parse(strings.TrimSpace(`
@@ -17,8 +16,6 @@ type Title struct {
 
 	// TagValue provides the value inside a reference.
 	TagValue TextElement
-
-	pool sync.Pool
 }
 
 func (t *Title) isElement() {}
@@ -33,26 +30,12 @@ func (t *Title) validate() error {
 	return nil
 }
 
-func (t *Title) Init() error {
-	t.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
-	return nil
-}
-
-func (t *Title) Execute(pipe Pipeline) template.HTML {
-	buff := t.pool.Get().(*strings.Builder)
-	defer t.pool.Put(buff)
-	buff.Reset()
-
+func (t *Title) Execute(pipe Pipeline) string {
 	pipe.Self = t
 
-	if err := titleTmpl.Execute(buff, pipe); err != nil {
+	if err := titleTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }

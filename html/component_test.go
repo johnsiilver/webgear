@@ -1,6 +1,7 @@
 package html
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -31,11 +32,10 @@ func TestComponent(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.component.Init(); err != nil {
-			panic(err)
-		}
-		got := test.component.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.component.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestComponent(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

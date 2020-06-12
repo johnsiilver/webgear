@@ -1,6 +1,7 @@
 package html
 
 import (
+	"context"
 	"net/url"
 	"strings"
 	"testing"
@@ -39,11 +40,10 @@ func TestScript(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.script.Init(); err != nil {
-			panic(err)
-		}
-		got := test.script.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.script.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestScript(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

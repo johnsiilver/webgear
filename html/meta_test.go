@@ -1,6 +1,8 @@
 package html
 
 import (
+	"context"
+	"strings"
 	"testing"
 )
 
@@ -46,11 +48,10 @@ func TestMeta(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := test.meta.Init(); err != nil {
-			panic(err)
-		}
-		got := test.meta.Execute(Pipeline{})
-		if test.want != string(got) {
+		got := &strings.Builder{}
+		pipe := NewPipeline(context.Background(), nil, got)
+		test.meta.Execute(pipe)
+		if test.want != got.String() {
 			t.Errorf("TestMeta(%s): \n\tgot  %q\n\twant %q", test.desc, got, test.want)
 		}
 	}

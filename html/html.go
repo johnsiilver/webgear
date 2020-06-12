@@ -1,21 +1,23 @@
 package html
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/yosssi/gohtml"
 )
 
 var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
-{{- if not .Self.Component}}<html>
+{{- if not .Self.Component}}<!DOCTYPE html>{{end}}
+{{if not .Self.Component}}<html>
 	{{.Self.Head.Execute .}}
 {{- end}}
 	{{.Self.Body.Execute .}}
@@ -26,17 +28,62 @@ var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
 // not supported. Component is used only internally by the component pacakge, any other use is not supported.
 // Data is what the user wishes to pass in for their application.
 type Pipeline struct {
+	// Ctx is the context of the call chain. This should be set by NewPipeline().
+	Ctx    context.Context
+	cancel context.CancelFunc
+
+	// errCh provides a channel that stores the first error encountered while trying to execute our internal call
+	// chain.
+	errCh chan error
+
 	// Req is the http.Request object for this call.
 	Req *http.Request
-	// W is the http.ResponseWriter. This can be used with the http.Error() call in the standard lib to
-	// indicate an error.
-	W http.ResponseWriter
+
+	// W is the output buffer.
+	W io.Writer
+
 	// Self represents the data structure of the object that is executing the template. This allows
 	// a template to access attributes that represent a tag, such as A{} accessing Href for rendering.
 	// A user should not set this, as it is automatically changed by the various Element implementations.
 	Self interface{}
+
 	// GearData provides a map of pipeline data keyed by gear name.
-	GearData map[string]interface{}
+	// TODO(johnsiilver): Might want to have the component package provide its own Pipeline that this
+	// pipeline is embedded in. Then GearData would only belong to that pipelin.  GearData has no
+	// affect on anything in this package.
+	GearData interface{}
+}
+
+// NewPipeline creates a new Pipeline object.
+func NewPipeline(ctx context.Context, req *http.Request, w io.Writer) Pipeline {
+	ctx, cancel := context.WithCancel(ctx)
+
+	return Pipeline{
+		Ctx:    ctx,
+		cancel: cancel,
+		errCh:  make(chan error, 1),
+		Req:    req,
+		W:      w,
+	}
+}
+
+// Error adds an error to the Pipeline. If there is already an error recorded, the error will be dropped.
+func (p Pipeline) Error(err error) {
+	p.cancel()
+	select {
+	case p.errCh <- err:
+	default:
+	}
+}
+
+// HadError returns an error if the pipeline had an error during execution.
+func (p Pipeline) HadError() error {
+	select {
+	case err := <-p.errCh:
+		return err
+	default:
+		return nil
+	}
 }
 
 // Doc represents an HTML 5 document.
@@ -52,10 +99,16 @@ type Doc struct {
 	Component bool
 
 	pool sync.Pool
+
+	initDone bool
 }
 
-// Init sets up all the internals for execution.  Must be called before Execute(). You only need to do this once.
+// Init sets up all the internals for execution. Must be called before Execute() and should only be called once.
 func (d *Doc) Init() error {
+	if d.initDone {
+		return nil
+	}
+
 	if err := d.validate(); err != nil {
 		return err
 	}
@@ -81,31 +134,50 @@ func (d *Doc) Init() error {
 		},
 	}
 
+	d.initDone = true
 	return nil
 }
 
-// Execute executes the internal template and writes the output to the io.Writer.
-func (d *Doc) Execute(w io.Writer, pipe Pipeline) error {
+// Execute executes the internal templates and writes the output to the io.Writer. This is thread-safe.
+func (d *Doc) Execute(ctx context.Context, w io.Writer, r *http.Request) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(r)
+		}
+	}()
+
+	if !d.initDone {
+		return fmt.Errorf("Doc object did not have .Init() called before Execute()")
+	}
+
+	pipe := NewPipeline(ctx, r, w)
 	pipe.Self = d
 
-	if d.Pretty {
-		return docTmpl.ExecuteTemplate(gohtml.NewWriter(w), "doc", pipe)
+	if err := docTmpl.Execute(w, pipe); err != nil {
+		return err
 	}
-
-	return docTmpl.ExecuteTemplate(w, "doc", pipe)
+	return pipe.HadError()
 }
 
-// Render calls execute execute and returns the string value.
-func (d *Doc) Render(pipe Pipeline) (template.HTML, error) {
-	w := d.pool.Get().(*strings.Builder)
-	defer d.pool.Put(w)
-	w.Reset()
+// ExecuteAsGear uses the Pipeline provided instead of creating one internally. This is for internal use only
+// and no guarantees are made on its operation or that it will exist in the future. This is thread-safe.
+func (d *Doc) ExecuteAsGear(pipe Pipeline) string {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(r)
+		}
+	}()
 
-	if err := d.Execute(w, pipe); err != nil {
-		return "", err
+	if !d.initDone {
+		pipe.Error(fmt.Errorf("Doc object did not have .Init() called before Execute()"))
+		return EmptyString
 	}
+	pipe.Self = d
 
-	return template.HTML(w.String()), nil
+	if err := docTmpl.Execute(pipe.W, pipe); err != nil {
+		pipe.Error(err)
+	}
+	return EmptyString
 }
 
 // validate attempts to do basic validation of the Doc contents as best it can.
@@ -120,8 +192,15 @@ func (d *Doc) validate() error {
 // Users may implement this, but do so at their own risk as we can change the implementation without
 // changing the major version.
 type Element interface {
-	Execute(pipe Pipeline) template.HTML
+	// Execute outputs the Element's textual representation to Pipeline.W . Execute returns a string,
+	// but that string value MUST always be an empty string. This is a side effect of the Go template
+	// system not allowing a function call unless it provides output or is in a FuncMap. FuncMap
+	// is not usable in this context.
+	Execute(pipe Pipeline) string
 }
+
+// EmptyString is returned by all Element.Execute() calls.
+const EmptyString = ""
 
 // Initer is a type that requires Init() to be called before using.
 type Initer interface {
@@ -135,7 +214,8 @@ type outputAble interface {
 	fmt.Stringer
 }
 
-// raw details if a type should have its output from String() just shoved in without field names or anything.
+// raw details if a type should have its output from String() just shoved in without having the stuct's
+// field name rendered or anything else.
 type raw interface {
 	isRaw()
 	fmt.Stringer
@@ -145,42 +225,42 @@ type raw interface {
 type DynamicFunc func(pipe Pipeline) []Element
 
 type dynamic struct {
-	f    DynamicFunc
-	pool sync.Pool
+	f DynamicFunc
 }
 
-func (d *dynamic) Execute(pipe Pipeline) template.HTML {
-	buff := d.pool.Get().(*strings.Builder)
-	defer d.pool.Put(buff)
-	buff.Reset()
+func (d *dynamic) Execute(pipe Pipeline) string {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("DynamicFunc with type %T paniced: %s\nstack trace:\n%s", d.f, r, string(debug.Stack()))
+		}
+	}()
 
 	pipe.Self = d
 
 	elements := d.f(pipe)
 	compileElements(elements)
 	for _, e := range elements {
-		buff.WriteString(string(e.Execute(pipe)))
+		if pipe.Ctx.Err() != nil {
+			return EmptyString
+		}
+		e.Execute(pipe)
 	}
-	return template.HTML(buff.String())
+	return EmptyString
 }
 
 // Dynamic wraps a DynamicFunc so that it implements Element.
 func Dynamic(f DynamicFunc) Element {
 	return &dynamic{
 		f: f,
-		pool: sync.Pool{
-			New: func() interface{} {
-				return &strings.Builder{}
-			},
-		},
 	}
 }
 
 // TextElement is an element that represents text, usually in a value. It is not valid everywhere.
 type TextElement string
 
-func (t TextElement) Execute(pipe Pipeline) template.HTML {
-	return template.HTML(t)
+func (t TextElement) Execute(pipe Pipeline) string {
+	pipe.W.Write([]byte(t))
+	return EmptyString
 }
 
 func (t TextElement) isZero() bool {

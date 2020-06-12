@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"sync"
 )
 
 var metaTmpl = template.Must(template.New("meta").Parse(strings.TrimSpace(`
@@ -43,8 +42,6 @@ type Meta struct {
 
 	// Content specifies the value associated with the http-equiv or name attribute.
 	Content string
-
-	pool sync.Pool
 }
 
 func (m *Meta) validate() error {
@@ -87,28 +84,12 @@ func (m *Meta) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
-func (m *Meta) isElement() {}
-
-func (m *Meta) Init() error {
-	m.pool = sync.Pool{
-		New: func() interface{} {
-			return &strings.Builder{}
-		},
-	}
-
-	return nil
-}
-
-func (m *Meta) Execute(pipe Pipeline) template.HTML {
-	buff := m.pool.Get().(*strings.Builder)
-	defer m.pool.Put(pipe)
-	buff.Reset()
-
+func (m *Meta) Execute(pipe Pipeline) string {
 	pipe.Self = m
 
-	if err := metaTmpl.Execute(buff, pipe); err != nil {
+	if err := metaTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
-	return template.HTML(buff.String())
+	return EmptyString
 }
