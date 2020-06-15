@@ -1,29 +1,62 @@
 /*
 Package component provides a Gear, which represents an HTML shadow-dom component. This allows creation of isolated
-HTML components using the "html" package.
+HTML components using the webgear/html package.
 
 Simply attach an *html.Doc element with a .Body and no .Head. This will be automatically isolated from other css
 styles in the top level document.  The component tag name will be the name you pass along in the constructor and you
 can access this component in your main document via the html.Component{} object.
+*/
+//
+// Prerequisites
+//
+/*
+To properly understand this package, you will need the following:
+	* Understanding of the webgears/html package
+	* Understand the idea of the Shadow-DOM in Web Components
 
-Example usage:
-	// Create doc that will be used by the Gear.
-	gearDoc := &html.Doc{
-		Body: &html.Body{
-			Elements: []html.Element{
-				&html.Link{Rel: "stylesheet", Href: "/static/main/gear.css"},
-				html.TextElement("John Doak"),
+If you don't know about web components, a good introduction can be found here: https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM
+*/
+//
+// Example Component
+//
+// This creates a component that simply prints a name and attaches that to an html.Doc object for rendering.
+/*
+	type dynName struct {
+		name string
+	}
+
+	func(d dynName) Name() []html.Element {
+		return []html.Element{html.TextElement(d.name)}
+	}
+
+	// New is our custom Gear's constructor that will print out the name we pass in via printName.
+	// The compName will be used to specify our custom HTML tag that allows exeuction of the component.
+	// If compName is "my-component", the the <my-component></my-component> tag is used to execute this component.
+	func New(compName, printName string) (*component.Gear, error) {
+		// Create doc that will be used by the Gear.
+		var doc := &html.Doc{
+			Body: &html.Body{
+				Elements: []html.Element{
+					&html.Link{Rel: "stylesheet", Href: "/static/main/gear.css"},
+					html.Dynamic(dynName{"John Doak"}.Name),
+				},
 			},
-		},
-	}
+		}
 
-	// Create the Gear.
-	gear, err := New("printname-component", gearDoc)
+		return component.New(name, doc)
+	}
+*/
+//
+// Attaching a Component
+//
+// To use a componenet in a page, it needs to be attached to an html.Doc to be rendered.
+/*
+	gear, err := printname.New("print-name-author", "John Doak")
 	if err != nil {
-		return err
+		// Do something
 	}
 
-	// Use the Gear in your index page. This is usually not in the same place as the component.
+	// Use the Gear in your index page. This is usually not in the same package as the component.
 	doc := &html.Doc{
 		Head: &html.Head{
 			&html.Meta{Charset: "UTF-8"},
@@ -33,12 +66,19 @@ Example usage:
 		},
 		Body: &html.Body{
 			Elements: []html.Element{
-				gear, // This causes the code to render.
+				// This causes the gear's generated code to be written to output.
+				gear,
+				// This is the gear tag that causes the code to be executed, aka <print-name-author></print-name-author>.
 				&html.Component{TagType: template.HTMLAttr(gear.Name())},
 			},
 		},
 	},
-
+*/
+//
+// Serving a page
+//
+// Now we need to serve the page and any external file required such as images or css files.
+/*
 	// Setup server handlers.
 	h := handlers.New(handlers.DoNotCache())
 

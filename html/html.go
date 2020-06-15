@@ -1,30 +1,75 @@
 /*
-Package html provide objects reprsenting HTML 5 tags that can be joined into a *Doc object and rendered.
+Package html provide objects representing HTML 5 tags that can be joined into a *Doc object and rendered.
 It provides support for attaching event objects and dynamic content.
 
-Note: It does not currently contain all tags in HTML 5.  These will be slowly added.
+This package is akin to assembly language for web display.
+*/
+//
+// Prerequisites
+//
+/*
+To get the most out of the package, you will need the following:
+	* An understanding of how HTML/CSS works
+	* More than a passing familiarity with the net/http package
+*/
+//
+// Package Layout
+//
+/*
+All HTML tags and attribute types are contained in one large package. Normally this is undesirable,
+creating too much "noise" in package documentation. But we want to emulate the
+HTML flat namespace to allow easy browsing for people already familiar with HTML.
 
-Basic Usage:
-	// Create a page with basic header information that links to a stylesheet and prints "Hello World".
-	doc := &html.Doc{
-		Head: &html.Head{
-			Elements: []html.Element{
-				&html.Meta{Charset: "UTF-8"},
-				&html.Title{TagValue: html.TextElement("Simple Example")},
-				&html.Link{Rel: "stylesheet", Href: html.URLParse("/static/index.css")},
-				&html.Link{Href: html.URLParse("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"), Rel: "stylesheet"},
-			},
-		},
-		Body: &html.Body{
-			Elements: []html.Element{
-				html.TextElement("Hello World")
-			},
-		},
-	}
+If you are looking
+for an <a> tag, it will be html.A{}. If you are looking for an <img>, it will be html.Img{} and so on.
 
-	// To serve the page, see the handlers/ package.
-
-Serve Dynamic Content:
+Note: This package does not currently contain all tags in HTML 5.  These will be slowly added.
+*/
+//
+// Element - The Basic Type
+//
+/*
+The Element interface is implemeted by all all html objects that wil produce output. These objects
+represent our HTML tags and special object that can output dynamic content.
+*/
+//
+// Doc - The Core Type
+//
+// The Doc type represents an HTML 5 document. Everything in the package eventually will end up in in a Doc for
+// rendering.
+//
+// The Doc is also used to build component.Gear objects which represent HTML Shadow-DOM components.
+//
+// Basic Usage
+//
+// Create a page with basic header information that links to a stylesheet and prints "Hello World".
+//	doc := &html.Doc{
+// 		Head: &html.Head{
+// 			Elements: []html.Element{
+// 				&html.Meta{Charset: "UTF-8"},
+// 				&html.Title{TagValue: html.TextElement("Simple Example")},
+// 				&html.Link{Rel: "stylesheet", Href: html.URLParse("/static/index.css")},
+// 				&html.Link{Href: html.URLParse("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"), Rel: "stylesheet"},
+// 			},
+// 		},
+// 		Body: &html.Body{
+// 			Elements: []html.Element{
+// 				html.TextElement("Hello World")
+// 			},
+// 		},
+// 	}
+//
+// 	// To serve the page, see the handlers/ package.
+//
+// Serve Dynamic Content
+//
+/*
+Similar to the template system, this package allows adding dynamic generated content. This is done by
+implementing a DynamicFunc type and attaching it as an Element object to another type. This is done
+via the Dynamic type.
+A DynamicFunc simply creates and returns a list of []Element objects that will be inserted.
+This example will serve a page that dynamically generates content from a slice. In a real situation, this could
+be fetched from a file, a cache, ....
 	// site represents a name of a site and a url to that site.
 	type site struct {
 		name string
@@ -38,8 +83,10 @@ Serve Dynamic Content:
 
 	// List implements html.DynamicFunc to take a list of sites and display links to them.
 	func (s sites) List(pipe Pipeline) []html.Element {
+		if err := pipe.Ctx.Err(); err != nil {
+			return nil
+		}
 		elements := []html.Element{}
-
 		for _, site := range s.sites {
 			elements = append(
 				elements,
@@ -47,6 +94,14 @@ Serve Dynamic Content:
 			)
 		}
 		return elements
+	}
+
+	// This creats an instance of sites{} that has various names and urls that we wish to list out.
+	var siteLister = sites{
+	sites: []site{
+		{"Microsoft", html.URLParse("www.microsoft.com")},
+		{"Google", html.URLParse("www.google.com")},
+		{"LucasFilm", html.URLParse("www.lucasfilm.com")},
 	}
 
 	// Create a page with basic header information that links to a stylesheet and prints "Hello World".
@@ -61,21 +116,48 @@ Serve Dynamic Content:
 		},
 		Body: &html.Body{
 			Elements: []html.Element{
-				html.Dynamic(
-					sites{
-						sites: []site{
-							{"Microsoft", html.URLParse("www.microsoft.com")},
-							{"Google", html.URLParse("www.google.com")},
-							{"LucasFilm", html.URLParse("www.lucasfilm.com")},
-						}
-					},
-				),
+				html.Dynamic(siteLister.List),
 			},
 		},
 	}
-
 	// To serve the page, see the handlers/ package.
 */
+//
+// The Pipeline
+//
+/*
+When implementing DynamicFunc above, the function signature requires a Pipeline object.
+Pipeline provides a changing context object that passes certain information through the program flow.
+This includes the actual Context of a call, the http.Request object and the output buffer W. The other
+attributes are not useful in this context.
+
+Here is an example of a DynamicFunc that returns the path of the URL it received for this call:
+	func URLPath(pipe Pipeline) []html.Element {
+		if err := pipe.Ctx.Err(); err != nil {
+			return nil
+		}
+
+		return []Element{html.TextElement(pipe.Req.URL.Path)}
+	}
+*/
+//
+// GlobalAttr
+//
+// Most objects implement the GlobalAttr. This provides standard attributes such as "id" or "class". When
+// available, this is implemented by embedding a GlobalAttr object in a tag type.
+//
+//	&html.A{
+//		GlobalAttr: GlobalAttr{ID: "golangLink"},
+//		Elements: []Element{TextElement("Golang.org")},
+//		Href: "http://golang.org",
+//	}
+//
+// Attaching Events
+//
+// Events are available on objects that support them via an Event attribute.  You can attach an event by
+// simply calling a method on the object that you wish to attach a script to.
+//
+//	&html.Body{Events: &Events{}.OnLoad("DoSomething")}
 package html
 
 import (

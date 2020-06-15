@@ -25,7 +25,7 @@ type Body struct {
 	Events *Events
 
 	// Componenet is used to indicate that this is a snippet of code, not a full document.
-	// As such, <body> will suppressed.
+	// As such, the <body></body> tags will suppressed but the content will be rendered.
 	Component bool
 }
 
