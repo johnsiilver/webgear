@@ -447,7 +447,7 @@ func structToString(i interface{}) string {
 
 	t := val.Type()
 	for i := 0; i < t.NumField(); i++ {
-		isNaked := false // Details if this is supposedly a attribute with no value attached.
+		isNaked := false // Details if this is supposedly a attribute with no value attached. Such as <tag attr> vs <tag attr=true>.
 
 		// Retrieve the field name.
 		name := ""
@@ -462,7 +462,7 @@ func structToString(i interface{}) string {
 		}
 
 		if tagName := sf.Tag.Get("html"); tagName != "" {
-			// Special: it says that it is a tag without value.
+			// Special: it says that it is a tag without value, like <tag attribute>.
 			if tagName == "attr" {
 				isNaked = true
 				name = sf.Name
@@ -495,7 +495,7 @@ func structToString(i interface{}) string {
 		switch field.Kind() {
 		case reflect.String:
 			str = field.String()
-			// This detects that the field was a zero value, so don't include it.
+			// This detects that the field was a zero value string, so don't include it.
 			if str == "" {
 				continue
 			}
@@ -538,6 +538,8 @@ func structToString(i interface{}) string {
 			} else {
 				continue
 			}
+		case reflect.Interface:
+			continue
 		default:
 			if meth := field.MethodByName("Get" + t.Name()); meth.IsValid() {
 				str = meth.Call(nil)[0].Interface().(string)

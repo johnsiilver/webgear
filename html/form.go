@@ -305,7 +305,7 @@ type Button struct {
 	// FormMethod specifies how to send the form-data (which HTTP method to use). Only for type="submit".
 	FormMethod FormMethod
 	// FormNoValidate specifies that the form-data should not be validated on submission. Only for type="submit".
-	FormNoValidate bool `html:"attr`
+	FormNoValidate bool `html:"attr"`
 	// FormTarget specifies where to display the response after submitting the form. Only for type="submit".
 	// Specific constants such as BlankTarget are defined for common target names in this package.
 	FormTarget string
