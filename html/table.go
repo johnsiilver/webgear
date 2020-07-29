@@ -284,7 +284,7 @@ type THead struct {
 	GlobalAttrs
 	Events *Events
 
-	Elements []TRElement
+	Elements []*TR
 }
 
 func (t *THead) isTableElement() {}

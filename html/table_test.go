@@ -54,20 +54,24 @@ func TestTable(t *testing.T) {
 							AccessKey: "key",
 						},
 						Events: (&Events{}).OnError("handleError"),
-						Elements: []TRElement{
-							&TH{
-								GlobalAttrs: GlobalAttrs{
-									AccessKey: "key",
+						Elements: []*TR{
+							&TR{
+								Elements: []TRElement{
+									&TH{
+										GlobalAttrs: GlobalAttrs{
+											AccessKey: "key",
+										},
+										Events:  (&Events{}).OnError("handleError"),
+										Element: TextElement("col 0 header"),
+									},
+									&TH{
+										GlobalAttrs: GlobalAttrs{
+											AccessKey: "key",
+										},
+										Events:  (&Events{}).OnError("handleError"),
+										Element: TextElement("col 1 header"),
+									},
 								},
-								Events:  (&Events{}).OnError("handleError"),
-								Element: TextElement("col 0 header"),
-							},
-							&TH{
-								GlobalAttrs: GlobalAttrs{
-									AccessKey: "key",
-								},
-								Events:  (&Events{}).OnError("handleError"),
-								Element: TextElement("col 1 header"),
 							},
 						},
 					},
@@ -130,12 +134,14 @@ func TestTable(t *testing.T) {
 		<col span="1" accesskey="key" onerror="handleError" >
 	</colgroup>
 	<thead accesskey="key" onerror="handleError">
-		<th element="col 0 header" accesskey="key" onerror="handleError">
-			col 0 header
-		</th>
-		<th element="col 1 header" accesskey="key" onerror="handleError">
-			col 1 header
-		</th>
+		<tr>
+			<th element="col 0 header" accesskey="key" onerror="handleError">
+				col 0 header
+			</th>
+			<th element="col 1 header" accesskey="key" onerror="handleError">
+				col 1 header
+			</th>
+		</tr>
 	</thead>
 	<tbody accesskey="key" onerror="handleError">
 		<tr>
