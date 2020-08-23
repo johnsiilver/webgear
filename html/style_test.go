@@ -29,7 +29,7 @@ func TestStyle(t *testing.T) {
 					AccessKey: "key",
 				},
 				TagValue: template.CSS("text"),
-				Events:   (&Events{}).OnError("handleError"),
+				Events:   (&Events{}).AddScript(OnError, "handleError"),
 			},
 			want: strings.TrimSpace(
 				`<style accesskey="key" onerror="handleError">

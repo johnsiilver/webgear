@@ -20,7 +20,7 @@ func TestComponent(t *testing.T) {
 				},
 				TagType:  "myComponent",
 				TagValue: TextElement("value"),
-				Events:   (&Events{}).OnError("handleError"),
+				Events:   (&Events{}).AddScript(OnError, "handleError"),
 			},
 
 			want: strings.TrimSpace(`

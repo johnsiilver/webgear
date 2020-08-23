@@ -37,7 +37,7 @@ func TestA(t *testing.T) {
 				Target:         BlankTarget,
 				Type:           "media",
 				Elements:       []Element{TextElement("text")},
-				Events:         (&Events{}).OnError("handleError"),
+				Events:         (&Events{}).AddScript(OnError, "handleError"),
 			},
 			want: `<a href="/subpage" download hreflang="english" media="query" ping="/reg" ` +
 				`referrerpolicy="origin" rel="author" target="_blank" type="media" accesskey="key" ` +

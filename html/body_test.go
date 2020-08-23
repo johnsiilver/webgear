@@ -23,7 +23,7 @@ func TestBody(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Events: (&Events{}).OnError("handleError"),
+				Events: (&Events{}).AddScript(OnError, "handleError"),
 				Elements: []Element{
 					&Div{
 						Elements: []Element{

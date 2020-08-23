@@ -23,7 +23,7 @@ func TestBR(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Events: (&Events{}).OnError("handleError"),
+				Events: (&Events{}).AddScript(OnError, "handleError"),
 			},
 
 			want: strings.TrimSpace(`
