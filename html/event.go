@@ -7,6 +7,47 @@ import (
 	"strings"
 )
 
+// EventType represents a browser based event like a click, mouseover, etc...
+type EventType string
+
+const (
+	OnAfterPrint   EventType = "onafterprint"
+	OnBeforePrint  EventType = "onbeforeprint"
+	OnBeforeUnload EventType = "onbeforeunload"
+	OnError        EventType = "onerror"
+	OnHashChange   EventType = "onhashchange"
+	OnLoad         EventType = "onload"
+	OnMessage      EventType = "onmessage"
+	OnOffline      EventType = "onoffline"
+	OnOnline       EventType = "ononline"
+	OnPageHide     EventType = "onpagehide"
+	OnPageShow     EventType = "onpageshow"
+	OnPopState     EventType = "onpopstate"
+	OnResize       EventType = "onresize"
+	OnStorage      EventType = "onstorage"
+	OnUnload       EventType = "onunload"
+	OnBlur         EventType = "onblur"
+	OnChange       EventType = "onchange"
+	OnContextMenu  EventType = "oncontextmenu"
+	OnFocus        EventType = "onfocus"
+	OnInput        EventType = "oninput"
+	OnInvalid      EventType = "oninvalid"
+	OnReset        EventType = "onreset"
+	OnSearch       EventType = "onsearch"
+	OnSelect       EventType = "onselect"
+	OnSubmit       EventType = "onsubmit"
+	OnKeyDown      EventType = "onkeydown"
+	OnKeyPress     EventType = "onkeypress"
+	OnKeyUp        EventType = "onkeyup"
+	OnClick        EventType = "onclick"
+	OnDblClick     EventType = "ondblclick"
+	OnMouseMove    EventType = "onmousemove"
+	OnMouseOut     EventType = "onmouseout"
+	OnMouseOver    EventType = "onmouseover"
+	OnMouseUp      EventType = "onmouseup"
+	OnWheel        EventType = "onwheel"
+)
+
 type event struct {
 	key   string
 	value string
@@ -50,198 +91,9 @@ func (e *Events) Attr() template.HTMLAttr {
 	return template.HTMLAttr(b.String())
 }
 
-func (e *Events) OnAfterPrint(scriptName string) *Events {
-	e.events = append(e.events, event{"onafterprint", scriptName})
-	return e
-}
-
-func (e *Events) OnBeforePrint(scriptName string) *Events {
-	e.events = append(e.events, event{"onbeforeprint", scriptName})
-	return e
-}
-
-func (e *Events) OnBeforeUnload(scriptName string) *Events {
-	e.events = append(e.events, event{"onbeforeunload", scriptName})
-	return e
-}
-
-func (e *Events) OnError(scriptName string) *Events {
-	e.events = append(e.events, event{"onerror", scriptName})
-	return e
-}
-
-func (e *Events) OnHashChange(scriptName string) *Events {
-	e.events = append(e.events, event{"onhashchange", scriptName})
-	return e
-}
-
-func (e *Events) OnLoad(scriptName string) *Events {
-	e.events = append(e.events, event{"onload", scriptName})
-
-	return e
-}
-func (e *Events) OnMessage(scriptName string) *Events {
-	e.events = append(e.events, event{"onmessage", scriptName})
-	return e
-}
-
-func (e *Events) OnOffline(scriptName string) *Events {
-	e.events = append(e.events, event{"onoffline", scriptName})
-	return e
-}
-
-func (e *Events) OnOnline(scriptName string) *Events {
-	e.events = append(e.events, event{"ononline", scriptName})
-	return e
-}
-
-func (e *Events) OnPageHide(scriptName string) *Events {
-	e.events = append(e.events, event{"onpagehide", scriptName})
-	return e
-}
-
-func (e *Events) OnPageShow(scriptName string) *Events {
-	e.events = append(e.events, event{"onpageshow", scriptName})
-	return e
-}
-
-func (e *Events) OnPopState(scriptName string) *Events {
-	e.events = append(e.events, event{"onpopstate", scriptName})
-	return e
-}
-
-func (e *Events) OnResize(scriptName string) *Events {
-	e.events = append(e.events, event{"onresize", scriptName})
-	return e
-}
-
-func (e *Events) OnStorage(scriptName string) *Events {
-	e.events = append(e.events, event{"onstorage", scriptName})
-	return e
-}
-
-func (e *Events) OnUnload(scriptName string) *Events {
-	e.events = append(e.events, event{"onunload", scriptName})
-	return e
-}
-
-// OnBlur is the script that fires the moment that the element loses focus.
-func (e *Events) OnBlur(scriptName string) *Events {
-	e.events = append(e.events, event{"onblur", scriptName})
-	return e
-}
-
-// OnChange is the script that fires the moment when the value of the element is changed.
-func (e *Events) OnChange(scriptName string) *Events {
-	e.events = append(e.events, event{"onchange", scriptName})
-	return e
-}
-
-// OnContextMenu is the script to be run when a context menu is triggered.
-func (e *Events) OnContextMenu(scriptName string) *Events {
-	e.events = append(e.events, event{"oncontextmenu", scriptName})
-	return e
-}
-
-// OnFocus is the script that fires the moment when the element gets focus.
-func (e *Events) OnFocus(scriptName string) *Events {
-	e.events = append(e.events, event{"onfocus", scriptName})
-	return e
-}
-
-// OnInput is the script to be run when an element gets user input.
-func (e *Events) OnInput(scriptName string) *Events {
-	e.events = append(e.events, event{"oninput", scriptName})
-	return e
-}
-
-// OnInvalid is the script to be run when an element is invalid.
-func (e *Events) OnInvalid(scriptName string) *Events {
-	e.events = append(e.events, event{"oninvalid", scriptName})
-	return e
-}
-
-// OnReset is the script that fires when the Reset button in a form is clicked.
-func (e *Events) OnReset(scriptName string) *Events {
-	e.events = append(e.events, event{"onreset", scriptName})
-	return e
-}
-
-// OnSearch is the script that fires when the user writes something in a search field (for <input="search">).
-func (e *Events) OnSearch(scriptName string) *Events {
-	e.events = append(e.events, event{"onsearch", scriptName})
-	return e
-}
-
-// OnSelect is the script that fires after some text has been selected in an element.
-func (e *Events) OnSelect(scriptName string) *Events {
-	e.events = append(e.events, event{"onselect", scriptName})
-	return e
-}
-
-// OnSubmit is the script that fires when a form is submitted.
-func (e *Events) OnSubmit(scriptName string) *Events {
-	e.events = append(e.events, event{"onsubmit", scriptName})
-	return e
-}
-
-// OnKeyDown is the script that fires when a user is presses a key.
-func (e *Events) OnKeyDown(scriptName string) *Events {
-	e.events = append(e.events, event{"onkeydown", scriptName})
-	return e
-}
-
-// OnKeyPress is the script that fires when a user is pressing a key.
-func (e *Events) OnKeyPress(scriptName string) *Events {
-	e.events = append(e.events, event{"onkeypress", scriptName})
-	return e
-}
-
-// OnKeyUp is the script that fires when a user releases a key.
-func (e *Events) OnKeyUp(scriptName string) *Events {
-	e.events = append(e.events, event{"onkeyup", scriptName})
-	return e
-}
-
-// OnClick is the script that fires on a mouse click on the element.
-func (e *Events) OnClick(scriptName string) *Events {
-	e.events = append(e.events, event{"onclick", scriptName})
-	return e
-}
-
-// OnDblClick is the script that fires on a mouse double-click on the element.
-func (e *Events) OnDblClick(scriptName string) *Events {
-	e.events = append(e.events, event{"ondblclick", scriptName})
-	return e
-}
-
-// OnMouseMove is the script that fires when a mouse button is pressed down on an element.
-func (e *Events) OnMouseMove(scriptName string) *Events {
-	e.events = append(e.events, event{"onmousedown", scriptName})
-	return e
-}
-
-// OnMouseOut is the script that fires when the mouse pointer moves out of an element.
-func (e *Events) OnMouseOut(scriptName string) *Events {
-	e.events = append(e.events, event{"onmouseout", scriptName})
-	return e
-}
-
-// OnMouseOver is the script that fires when the mouse pointer moves over an element.
-func (e *Events) OnMouseOver(scriptName string) *Events {
-	e.events = append(e.events, event{"onmouseover", scriptName})
-	return e
-}
-
-// OnMouseUp is the script that fires when a mouse button is released over an element.
-func (e *Events) OnMouseUp(scriptName string) *Events {
-	e.events = append(e.events, event{"onmouseup", scriptName})
-	return e
-}
-
-// OnWheel is the script that fires when the mouse wheel rolls up or down over an element.
-func (e *Events) OnWheel(scriptName string) *Events {
-	e.events = append(e.events, event{"onwheel", scriptName})
+// AddScript adds a script by name that is triggered when a specific event occurs.
+func (e *Events) AddScript(etype EventType, scriptName string) *Events {
+	e.events = append(e.events, event{string(etype), scriptName})
 	return e
 }
 

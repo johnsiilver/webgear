@@ -19,7 +19,7 @@ func TestP(t *testing.T) {
 					AccessKey: "key",
 				},
 				Elements: []Element{TextElement("text")},
-				Events:   (&Events{}).OnError("handleError"),
+				Events:   (&Events{}).AddScript(OnError, "handleError"),
 			},
 
 			want: strings.TrimSpace(`

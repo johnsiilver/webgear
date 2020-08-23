@@ -18,33 +18,33 @@ func TestTable(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Events: (&Events{}).OnError("handleError"),
+				Events: (&Events{}).AddScript(OnError, "handleError"),
 				Elements: []TableElement{
 					&Caption{
 						GlobalAttrs: GlobalAttrs{
 							AccessKey: "key",
 						},
-						Events:  (&Events{}).OnError("handleError"),
+						Events:  (&Events{}).AddScript(OnError, "handleError"),
 						Element: TextElement("caption"),
 					},
 					&ColGroup{
 						GlobalAttrs: GlobalAttrs{
 							AccessKey: "key",
 						},
-						Events: (&Events{}).OnError("handleError"),
+						Events: (&Events{}).AddScript(OnError, "handleError"),
 						Span:   1,
 						Elements: []ColGroupElement{
 							&Col{
 								GlobalAttrs: GlobalAttrs{
 									AccessKey: "key",
 								},
-								Events: (&Events{}).OnError("handleError"),
+								Events: (&Events{}).AddScript(OnError, "handleError"),
 							},
 							&Col{
 								GlobalAttrs: GlobalAttrs{
 									AccessKey: "key",
 								},
-								Events: (&Events{}).OnError("handleError"),
+								Events: (&Events{}).AddScript(OnError, "handleError"),
 								Span:   1,
 							},
 						},
@@ -53,7 +53,7 @@ func TestTable(t *testing.T) {
 						GlobalAttrs: GlobalAttrs{
 							AccessKey: "key",
 						},
-						Events: (&Events{}).OnError("handleError"),
+						Events: (&Events{}).AddScript(OnError, "handleError"),
 						Elements: []*TR{
 							&TR{
 								Elements: []TRElement{
@@ -61,14 +61,14 @@ func TestTable(t *testing.T) {
 										GlobalAttrs: GlobalAttrs{
 											AccessKey: "key",
 										},
-										Events:  (&Events{}).OnError("handleError"),
+										Events:  (&Events{}).AddScript(OnError, "handleError"),
 										Element: TextElement("col 0 header"),
 									},
 									&TH{
 										GlobalAttrs: GlobalAttrs{
 											AccessKey: "key",
 										},
-										Events:  (&Events{}).OnError("handleError"),
+										Events:  (&Events{}).AddScript(OnError, "handleError"),
 										Element: TextElement("col 1 header"),
 									},
 								},
@@ -79,7 +79,7 @@ func TestTable(t *testing.T) {
 						GlobalAttrs: GlobalAttrs{
 							AccessKey: "key",
 						},
-						Events: (&Events{}).OnError("handleError"),
+						Events: (&Events{}).AddScript(OnError, "handleError"),
 						Elements: []*TR{
 							&TR{
 								Elements: []TRElement{
@@ -107,7 +107,7 @@ func TestTable(t *testing.T) {
 						GlobalAttrs: GlobalAttrs{
 							AccessKey: "key",
 						},
-						Events: (&Events{}).OnError("handleError"),
+						Events: (&Events{}).AddScript(OnError, "handleError"),
 						Elements: []*TR{
 							&TR{
 								Elements: []TRElement{

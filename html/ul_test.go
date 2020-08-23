@@ -23,7 +23,7 @@ func TestUl(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Events: (&Events{}).OnError("handleError"),
+				Events: (&Events{}).AddScript(OnError, "handleError"),
 				Elements: []Element{
 					&A{Href: "/subpage", Elements: []Element{TextElement("hello")}},
 				},

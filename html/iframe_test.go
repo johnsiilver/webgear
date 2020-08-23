@@ -18,7 +18,7 @@ func TestIFrame(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Events:              (&Events{}).OnError("handleError"),
+				Events:              (&Events{}).AddScript(OnError, "handleError"),
 				Name:                "name",
 				Src:                 URLParse("https://vimeo.com"),
 				Allow:               "autoplay; fullscreen",
