@@ -1,7 +1,5 @@
-// +build js wasm
-
 /*
-Package wasm provides the application entrance for WASM applications and the API for making UI changes.  
+Package wasm provides the application entrance for WASM applications and the API for making UI changes.
 In this context, WASM applications are built off the webgear frameworks and update via this package's
 UI object.
 
@@ -10,7 +8,7 @@ This package is used in two different places
 	Inside your web server that is serving the Wasm app where you will use the Handler() func to generate a handler that loads your app.
 
 WASM apps are binaries that are pre-compiled but loaded via JS served from a web browser. Normally it requires
-an HTML page and JS bootstrapping. We provide the http.Handler that can mount this app and all the 
+an HTML page and JS bootstrapping. We provide the http.Handler that can mount this app and all the
 bootstrapping JS code.
 
 This package along with the webgear/html and webgear/component remove the need to use HTML or JS within
@@ -22,18 +20,18 @@ This should be done via REST or other HTTP based calls.
 package wasm
 
 import (
-	"fmt"
 	"bytes"
-	"sync"
 	"context"
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
-	"syscall/js"
 	"reflect"
+	"sync"
+	"syscall/js"
 
 	"github.com/johnsiilver/webgear/html"
-	
+
 	"github.com/ulule/deepcopier"
 )
 
@@ -61,8 +59,8 @@ var bufferPool = &buffPool{
 
 // Wasm represents a self contained WASM application.
 type Wasm struct {
-	doc *html.Doc
-	renderIn chan *html.Doc 
+	doc      *html.Doc
+	renderIn chan *html.Doc
 	updateMu sync.Mutex
 }
 
@@ -77,7 +75,7 @@ func New(doc *html.Doc) *Wasm {
 	}
 
 	w := &Wasm{
-		doc: doc, 
+		doc:      doc,
 		renderIn: make(chan *html.Doc, 1),
 	}
 
@@ -88,7 +86,7 @@ func New(doc *html.Doc) *Wasm {
 // the initial doc cannot be rendered, which will cause a panic.
 func (w *Wasm) Run(ctx context.Context) {
 	req, _ := http.NewRequestWithContext(ctx, "POST", "/", bytes.NewBuffer([]byte{}))
-	
+
 	buff := bufferPool.get()
 	defer bufferPool.put(buff)
 
@@ -99,7 +97,7 @@ func (w *Wasm) Run(ctx context.Context) {
 
 	js.Global().Get("document").Call("innerHTML", buff.String())
 
-	select{}
+	select {}
 }
 
 // UI creates a new UI object for changing the current UI output. This call is thread-safe, but blocks on
@@ -120,7 +118,7 @@ type Func func(this js.Value, args []js.Value) interface{}
 // may have negative consequences on performance, but that pause is such a hastle to track down for every new dev that
 // I don't care about that. Finally, this attaches based on the element's .GlobalAttrs.ID. If that is not set, this is going to
 // panic.
-func Attach(event html.EventType, element html.Element, release bool, fn Func) html.Element{
+func Attach(event html.EventType, element html.Element, release bool, fn Func) html.Element {
 	var cb js.Func
 	js.FuncOf(
 		func(this js.Value, args []js.Value) interface{} {
@@ -166,7 +164,7 @@ func Handler(u *url.URL) (http.Handler, error) {
 				&html.Script{
 					TagValue: template.JS(
 						fmt.Sprintf(
-`
+							`
 const go = new Go();
 WebAssembly.instantiateStreaming(fetch("%s"), go.importObject).then((result) => {
 	go.run(result.instance);
