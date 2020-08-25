@@ -107,7 +107,7 @@ func (u *UI) Update(id string, with html.Element) error {
 		return fmt.Errorf("Update() was updating a %T node, but used a %T node, which isn't allowed", n.element, with)
 	}
 	if err := replaceElementInNode(n.parent, with); err != nil {
-		return fmt.Errorf("Update() was updating a %T node and got error: %w", n.parent, with, err)
+		return fmt.Errorf("Update() was updating a %T node and got error: %w", n.parent, err)
 	}
 	buff := bufferPool.get()
 	defer bufferPool.put(buff)
@@ -167,7 +167,7 @@ func (u *UI) Delete(id string) error {
 		panic("UI.Delete() called on closed UI")
 	}
 
-	parent, err := deleteNode(id, u.nodes)
+	parent, err := deleteElement(id, u.nodes)
 	if err != nil {
 		return fmt.Errorf("Delete() error: %v", err)
 	}
