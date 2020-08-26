@@ -1,25 +1,28 @@
 package wasm
 
 import (
-	"sync"
-	"log"
-	"fmt"
 	"context"
+	"fmt"
+	"log"
 	"net/http"
+	"sync"
 	"syscall/js"
 
 	"github.com/johnsiilver/webgear/html"
+
+	"github.com/mohae/deepcopy"
 )
 
 // UI provides an object that controls updating the client's Web UI.
 // This object allows you to stage a set of changes and then render that change on Close().
 type UI struct {
-	mu sync.Mutex
-	body *html.Body
-	nodes map[string]elemNode
-	updates []func()
-	wasm *Wasm
-	closed bool
+	mu       sync.Mutex
+	body     *html.Body
+	nodes    map[string]elemNode
+	validate []func() error
+	updates  []func()
+	wasm     *Wasm
+	closed   bool
 }
 
 func newUI(body *html.Body, w *Wasm) *UI {
@@ -29,13 +32,13 @@ func newUI(body *html.Body, w *Wasm) *UI {
 	}
 
 	return &UI{
-		body: copyBody(body),
+		body:  copyBody(body),
 		nodes: nodes,
-		wasm: w,
+		wasm:  w,
 	}
 }
 
-// Closes our our UI for updates and renders the changes. If already Closed this will panic.
+// Close closes our our UI for updates and renders the changes. If already Closed this will panic.
 // Once closed, any use of this object will cause a panic.
 func (u *UI) Close() error {
 	u.mu.Lock()
@@ -45,7 +48,13 @@ func (u *UI) Close() error {
 		panic("UI.Close() called on closed UI")
 	}
 	u.closed = true
-	defer u.wasm.updateMu.Unlock()  // Yuck
+	defer u.wasm.updateMu.Unlock() // Yuck
+
+	for _, fn := range u.validate {
+		if err := fn(); err != nil {
+			return fmt.Errorf("an item that was supposed to update did not exist, no updates applied: %s", err)
+		}
+	}
 
 	for _, fn := range u.updates {
 		fn()
@@ -106,7 +115,7 @@ func (u *UI) Update(id string, with html.Element) error {
 	if fmt.Sprintf("%T", n.element) != fmt.Sprintf("%T", with) {
 		return fmt.Errorf("Update() was updating a %T node, but used a %T node, which isn't allowed", n.element, with)
 	}
-	if err := replaceElementInNode(n.parent, with); err != nil {
+	if err := replaceElementInNode(n.parent, id, with); err != nil {
 		return fmt.Errorf("Update() was updating a %T node and got error: %w", n.parent, err)
 	}
 	buff := bufferPool.get()
@@ -114,10 +123,23 @@ func (u *UI) Update(id string, with html.Element) error {
 
 	pipe := html.NewPipeline(context.Background(), &http.Request{}, buff)
 	with.Execute(pipe)
+	u.validate = append(
+		u.validate,
+		func() error {
+			log.Println("document text: ", js.Global().Get("document").Get("outerHTML"))
+			log.Println("myDiv: ", js.Global().Get("document").Call("getElementById", "myDiv"))
+			el := js.Global().Get("document").Call("getElementById", id)
+			if !el.Truthy() {
+				return fmt.Errorf("attempt to update element ID %q failed: element does not exist", id)
+			}
+			return nil
+		},
+	)
 	u.updates = append(
-		u.updates, 
+		u.updates,
 		func() {
-			js.Global().Get("document").Call("getElementById", id).Call("innerHTML", buff.String())
+			log.Printf("calling document.getElementById(%s).outerHTML = <stuff>", id)
+			js.Global().Get("document").Call("getElementById", id).Set("outerHTML", buff.String())
 		},
 	)
 	return nil
@@ -143,16 +165,26 @@ func (u *UI) AddTo(id string, with html.Element) error {
 	if err := addElementToNode(n.parent, with); err != nil {
 		return fmt.Errorf("AddTo() request error: %w", err)
 	}
-	
+
 	buff := bufferPool.get()
 	defer bufferPool.put(buff)
 
 	pipe := html.NewPipeline(context.Background(), &http.Request{}, buff)
 	n.element.Execute(pipe)
+	u.validate = append(
+		u.validate,
+		func() error {
+			el := js.Global().Get("document").Call("getElementById", id)
+			if !el.Truthy() {
+				return fmt.Errorf("attempt to update element ID %q failed: element does not exist", id)
+			}
+			return nil
+		},
+	)
 	u.updates = append(
-		u.updates, 
+		u.updates,
 		func() {
-			js.Global().Get("document").Call("getElementById", id).Call("innerHTML", buff.String())
+			js.Global().Get("document").Call("getElementById", id).Set("innerHTML", buff.String())
 		},
 	)
 	return nil
@@ -171,17 +203,31 @@ func (u *UI) Delete(id string) error {
 	if err != nil {
 		return fmt.Errorf("Delete() error: %v", err)
 	}
-	
+
 	buff := bufferPool.get()
 	defer bufferPool.put(buff)
 
 	pipe := html.NewPipeline(context.Background(), &http.Request{}, buff)
 	parent.Execute(pipe)
+	u.validate = append(
+		u.validate,
+		func() error {
+			el := js.Global().Get("document").Call("getElementById", getElementID(parent))
+			if !el.Truthy() {
+				return fmt.Errorf("attempt to update element ID %q failed: element does not exist", id)
+			}
+			return nil
+		},
+	)
 	u.updates = append(
-		u.updates,  
+		u.updates,
 		func() {
-			js.Global().Get("document").Call("getElementById", getElementID(parent)).Call("innerHTML", buff.String())
+			js.Global().Get("document").Call("getElementById", getElementID(parent)).Set("innerHTML", buff.String())
 		},
 	)
 	return nil
+}
+
+func copyBody(body *html.Body) *html.Body {
+	return deepcopy.Copy(body).(*html.Body)
 }
