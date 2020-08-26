@@ -127,7 +127,7 @@ func (u *UI) Update(id string, with html.Element) error {
 		u.validate,
 		func() error {
 			log.Println("document text: ", js.Global().Get("document").Get("outerHTML"))
-			log.Println("myDiv: ", js.Global().Get("document").Call("getElementById", "myDiv"))
+			log.Printf("id(%s): %s", id, js.Global().Get("document").Call("getElementById", id))
 			el := js.Global().Get("document").Call("getElementById", id)
 			if !el.Truthy() {
 				return fmt.Errorf("attempt to update element ID %q failed: element does not exist", id)
