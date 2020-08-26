@@ -24,12 +24,12 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"net/url"
 	"reflect"
 	"sync"
 	"syscall/js"
-	"log"
 
 	"github.com/johnsiilver/webgear/html"
 )
@@ -78,7 +78,7 @@ func New(doc *html.Doc) *Wasm {
 	w := &Wasm{
 		doc:      doc,
 		renderIn: make(chan *html.Doc, 1),
-		ready: make(chan struct{}),
+		ready:    make(chan struct{}),
 	}
 
 	return w
@@ -101,11 +101,12 @@ func (w *Wasm) Run(ctx context.Context) {
 		panic(err)
 	}
 
+	log.Println("document as it is in Run() before it is set: ", js.Global().Get("document").Get("outerHTML"))
 	js.Global().Get("document").Set("outerHTML", buff.String())
-	js.Global().Get("dom").Call("serialize")
+	log.Println("document as it us set in Run():\n", js.Global().Get("document").Get("outerHTML"))
+	log.Println("hello: ", js.Global().Get("document").Call("getElementById", "hello").Get("outerHTML"))
 	log.Println("myDiv: ", js.Global().Get("document").Call("getElementById", "myDiv"))
 
-	//log.Println("document is:\n", buff.String())
 	close(w.ready)
 	select {}
 }
