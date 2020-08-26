@@ -83,6 +83,7 @@ func TestReplaceElementInNode(t *testing.T) {
 	tests := []struct{
 		desc string
 		parent Element
+		id string
 		element Element
 		want Element
 		err bool
@@ -111,6 +112,7 @@ func TestReplaceElementInNode(t *testing.T) {
 					&Span{GlobalAttrs: GlobalAttrs{ID: "myData"}},
 				},
 			},
+			id: "myData",
 			element: &Div{GlobalAttrs: GlobalAttrs{ID: "myData"}},
 			want: &Div{
 				GlobalAttrs: GlobalAttrs{ID: "myDiv"},
@@ -122,7 +124,7 @@ func TestReplaceElementInNode(t *testing.T) {
 	}
 
 	for _, test := range tests{
-		err := replaceElementInNode(test.parent, test.element)
+		err := replaceElementInNode(test.parent, test.id, test.element)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestReplaceElementInNode(%s): got err == nil, want != nil", test.desc)

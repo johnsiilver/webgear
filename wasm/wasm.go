@@ -29,10 +29,9 @@ import (
 	"reflect"
 	"sync"
 	"syscall/js"
+	"log"
 
 	"github.com/johnsiilver/webgear/html"
-
-	"github.com/ulule/deepcopier"
 )
 
 type buffPool struct {
@@ -62,6 +61,8 @@ type Wasm struct {
 	doc      *html.Doc
 	renderIn chan *html.Doc
 	updateMu sync.Mutex
+
+	ready chan struct{}
 }
 
 // New creates a new Wasm instance.  The doc passed will be used to replace the contents of the document once our app is
@@ -77,6 +78,7 @@ func New(doc *html.Doc) *Wasm {
 	w := &Wasm{
 		doc:      doc,
 		renderIn: make(chan *html.Doc, 1),
+		ready: make(chan struct{}),
 	}
 
 	return w
@@ -90,14 +92,27 @@ func (w *Wasm) Run(ctx context.Context) {
 	buff := bufferPool.get()
 	defer bufferPool.put(buff)
 
+	if w.doc.Head == nil {
+		w.doc.Head = &html.Head{}
+	}
+	w.doc.Init()
 	err := w.doc.Execute(ctx, buff, req)
 	if err != nil {
 		panic(err)
 	}
 
-	js.Global().Get("document").Call("innerHTML", buff.String())
+	js.Global().Get("document").Set("outerHTML", buff.String())
+	js.Global().Get("dom").Call("serialize")
+	log.Println("myDiv: ", js.Global().Get("document").Call("getElementById", "myDiv"))
 
+	//log.Println("document is:\n", buff.String())
+	close(w.ready)
 	select {}
+}
+
+// Ready will block until Run() has rendered the initial document. Mostly used in tests.
+func (w *Wasm) Ready() {
+	<-w.ready
 }
 
 // UI creates a new UI object for changing the current UI output. This call is thread-safe, but blocks on
@@ -177,10 +192,4 @@ WebAssembly.instantiateStreaming(fetch("%s"), go.importObject).then((result) => 
 	}
 
 	return handler{doc: doc}, nil
-}
-
-func copyBody(body *html.Body) *html.Body {
-	cp := &html.Body{}
-	deepcopier.Copy(body).To(cp)
-	return cp
 }

@@ -90,7 +90,7 @@ func walkElement(parent, element html.Element, m map[string]elemNode) error {
 	return nil
 }
 
-func replaceElementInNode(parent html.Element, element html.Element) error {
+func replaceElementInNode(parent html.Element, id string, element html.Element) error {
 	eID := getElementID(element)
 	if eID == "" {
 		return fmt.Errorf("cannot replace an Element if the Element does not have an ID")
@@ -116,7 +116,7 @@ func replaceElementInNode(parent html.Element, element html.Element) error {
 	if slice.IsValid() {
 		for i := 0; i < slice.Len(); i++ {
 			sliceElem := slice.Index(i).Interface().(html.Element)
-			if getElementID(sliceElem) == eID {
+			if getElementID(sliceElem) == id {
 				slice.Index(i).Set(reflect.ValueOf(element))
 				return nil
 			}
