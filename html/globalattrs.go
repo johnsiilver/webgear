@@ -61,6 +61,11 @@ type GlobalAttrs struct {
 	Title string
 	// Translate specifies extra information about an element.
 	Translate YesNo
+
+	// XXXWasmUpdated indicates that a DocUpdater has updated the Element this is attached to, but
+	// we have not flushed the changes to the DOM. This field is not a GlobalAttrs for HTML and is only public
+	// so that is may be manipulated via reflection.
+	XXXWasmUpdated bool
 }
 
 func (g GlobalAttrs) Attr() template.HTMLAttr {

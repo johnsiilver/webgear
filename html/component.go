@@ -15,20 +15,39 @@ type Attribute interface {
 }
 
 var componenetTmpl = template.Must(template.New("component").Parse(strings.TrimSpace(`
-<{{.Self.TagType}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-	{{.Self.TagValue}}
-</{{.Self.TagType}}>
+<{{.Self.Gear.TagType}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
+	{{with .Self.TagValue}}{{.Self.TagValue}}{{end}}
+</{{.Self.Gear.TagType}}>
 `)))
 
+// GearType is an interface only meant to be implemented by *component.Gear. We cannot
+// use component.Gear because component uses this package (cyclic dependency). We do
+// not want to merge these packages and don't want to migrate the Element type out.
+// So this is used as a stand in. The only valid use for this in client code is for tests,
+// which should always embed GearType.  Any other use has no compatibility promise.
+type GearType interface {
+	Element
+	Name() string
+	GearID() string
+	TagType() html.HTMLAttr
+	Execute(pipe Pipeline) string
+	UpdateFlag() bool
+	SetUpdateFlag()
+	RemoveUpdateFlag()
+	UpdateDOM() error
+}
+
 // Component is for providing custom componenets registered through the javascript window.customElements type.
+// Be aware that the .Gear.Name() will override a provided GlobalAttrs value.
 type Component struct {
 	GlobalAttrs
 
 	// Attributes are custom attributes to apply to the component.
 	Attributes []Attribute
 
-	// TageType (required) is the name of the custom componenet tag, like "myComponent".
-	TagType html.HTMLAttr
+	// Gear is the *component.Gear that implements the componenent. The name of that Gear will be both the tag type and
+	// the id of the Gear.
+	Gear GearType
 
 	// TagValue provides the value inside a reference. This can be another element such as a div, but most commonly
 	// it is not defined.
@@ -38,13 +57,10 @@ type Component struct {
 }
 
 func (c *Component) validate() error {
-	if c.TagType == "" {
-		return fmt.Errorf("Component.TagValue cannot be empty")
+	if c.Gear == nil {
+		return fmt.Errorf("Component.Gear cannot be empty")
 	}
 
-	if !strings.Contains(string(c.TagType), "-") {
-		return fmt.Errorf("Components.TagValue does not have a '-' in the name, as required by the spec")
-	}
 	return nil
 }
 
@@ -52,6 +68,10 @@ func (c *Component) isElement() {}
 
 func (c *Component) Execute(pipe Pipeline) string {
 	pipe.Self = c
+
+	ga := c.GlobalAttrs
+	ga.ID = string(c.Gear.TagType())
+	c.GlobalAttrs = ga
 
 	if err := componenetTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)

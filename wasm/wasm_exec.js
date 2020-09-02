@@ -128,15 +128,14 @@
 	}
 
 	if (!global.document) {
-                const jsdom = require("jsdom")
-                const { JSDOM } = jsdom;
+        const jsdom = require("jsdom")
+        const { JSDOM } = jsdom;
 		const dom = new JSDOM(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><div id="hello"></div></body></html>`, {
 			contentType: "text/html",
 			pretendToBeVisual: true,
 		});
 		global.document = dom.window.document;
-		// global.window = global.document.defaultView;
-        }
+    }
 
 	// End of polyfills for common API.
 

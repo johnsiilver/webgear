@@ -105,34 +105,73 @@ If you don't know about web components, a good introduction can be found here: h
 package component
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/johnsiilver/webgear/html"
 )
 
-var gearTmpl = template.Must(template.New("gear").Parse(strings.TrimSpace(`
+var htmlTemplateTxt = `
+{{ define "template" }}
 <template id="{{.Self.Name}}Template">
 	{{.Self.Doc.ExecuteAsGear .}}
 </template>
+{{ end }}
+`
 
+var scriptTemplateTxt = `
+{{ define "script" }}
 <script>
-  window.customElements.define(
-		'{{.Self.Name}}',
-		class extends HTMLElement {
-			constructor() {
-				super();
-				let template = document.getElementById('{{.Self.Name}}Template');
-				let templateContent = template.content;
+	function {{.Self.LoaderName}}() {
+		if (!window.customElements.get('{{.Self.Name}}')) {
+			window.customElements.define(
+				'{{.Self.Name}}',
+				class extends HTMLElement {
+					constructor() {
+						super();
+						let template = document.getElementById('{{.Self.Name}}Template');
+						let templateContent = template.content;
 
-				const shadowRoot = this.attachShadow({mode: 'open'}).appendChild(templateContent.cloneNode(true));
-			}
+						const shadowRoot = this.attachShadow({mode: 'open'}).appendChild(templateContent.cloneNode(true));
+					}
+				}
+			);
 		}
-	);
+		let old = document.getElementById("{{.Self.Name}}");
+		if (old !== null) {
+			let newcomp = old.cloneNode(true);
+			document.body.replaceChild(newcomp, old);
+		}
+	}
+	console.log("hello world");
+	{{.Self.LoaderName}}();
 </script>
-`)))
+{{ end }}
+`
+
+var combinedTxt = `
+{{ template "template" . }}
+
+{{ template "script" . }}
+`
+
+var justTemplate = `
+{{ template "template" . }}
+`
+
+var gearTmpl *template.Template
+
+func init() {
+	gearTmpl = template.Must(template.New("htmlTemplate").Parse(htmlTemplateTxt))
+	gearTmpl = template.Must(gearTmpl.New("scriptTemplate").Parse(scriptTemplateTxt))
+	gearTmpl = template.Must(gearTmpl.New("combinedTxt").Parse(combinedTxt))
+	gearTmpl = template.Must(gearTmpl.New("justTemplate").Parse(justTemplate))
+}
 
 // DataFunc represents a function that provides data in the html.Pipeline.GearData. The DataFunc should
 // return data that will be stored in the html.Pipeline.GearData field. The returned object must be thread-safe.
@@ -141,11 +180,16 @@ type DataFunc func(r *http.Request) (interface{}, error)
 // Gear is a shadow-dom component.
 type Gear struct {
 	// Doc is public to allow its use in internal templating code. It should only be set by the call to New().
-	Doc      *html.Doc
-	gears    []*Gear
+	Doc *html.Doc
+	// Gears is public to allow external packages to access Gear data. This houls only be set by AddGear().
+	Gears    []*Gear
 	dataFunc DataFunc
 
-	name string
+	name       string
+	loaderName string
+
+	wasmUpdateMu sync.Mutex
+	wasmUpdate   bool
 }
 
 // Option is an optional argument to the New() constructor.
@@ -162,21 +206,18 @@ func ApplyDataFunc(f DataFunc) Option {
 }
 
 // AddGear adds another Gear that will be called before this gear is called.  This allows a componenet to use
-// other components.
+// other components. You still must use html.Component{} to insert your custom tag where you want the componenet to be displayed.
 func AddGear(newGear *Gear) Option {
 	return func(g *Gear) {
-		g.gears = append(g.gears, newGear)
+		g.Gears = append(g.Gears, newGear)
 	}
 }
 
-// New creates a new Gear object called "name" using the HTML provided by the doc passed.
+// New creates a new Gear object called "name" using the HTML provided by the doc passed. Name also is used for the tag's
+// ID when using the html.Component{} type.
 func New(name string, doc *html.Doc, options ...Option) (*Gear, error) {
-	if name == "" {
-		return nil, fmt.Errorf("must provide a name for the Gear")
-	}
-
-	if !strings.Contains(name, "-") {
-		return nil, fmt.Errorf("a componenent name must have a - in it, don't blame me, blame the spec")
+	if err := validName(name); err != nil {
+		return nil, err
 	}
 
 	doc.Component = true
@@ -186,9 +227,19 @@ func New(name string, doc *html.Doc, options ...Option) (*Gear, error) {
 		return nil, err
 	}
 
+	walkCtx, cancel := context.WithCancel(context.Background())
+	for walked := range html.Walker(walkCtx, doc.Body) {
+		if _, ok := walked.Element.(*Gear); ok {
+			cancel()
+			return nil, fmt.Errorf("WebGear Component(%s) had another component(%s) added directly to the passed *html.Doc," +
+				"this can only be added using the component.AddGear() option to allow correct rendered ordering")
+		}
+	}
+
 	g := &Gear{
-		Doc:  doc,
-		name: name,
+		Doc:        doc,
+		name:       name,
+		loaderName: strings.ReplaceAll(name, "-", "") + "Loader",
 	}
 
 	for _, o := range options {
@@ -201,6 +252,28 @@ func New(name string, doc *html.Doc, options ...Option) (*Gear, error) {
 // Name returns the name of the Gear so that it may be referenced.
 func (g *Gear) Name() string {
 	return g.name
+}
+
+// TagType is the same as Name() except the type works in the templates.
+func (g *Gear) TagType() template.HTMLAttr {
+	return template.HTMLAttr(g.name)
+}
+
+// GearID outputs the ID of the gear stored in the .Doc.  Gear's are special and are never output
+// to HTML with this name (output with TemplateName() and LoaderName()), but we still need a way
+// to reference them in our Doc tree. This is that ID.
+func (g *Gear) GearID() string {
+	return "gear-"+ g.name
+}
+
+// LoaderName is the name of the JS function that defines the HTML custom element and causes the custom element to render.
+func (g *Gear) LoaderName() template.JS {
+	return template.JS(g.loaderName)
+}
+
+// TemplateName is the DOM id of the template that is used for this component.
+func (g *Gear) TemplateName() string {
+	return g.name + "Template"
 }
 
 // Execute executes the internal templates and renders the html for output with the given pipeline.
@@ -216,17 +289,60 @@ func (g *Gear) Execute(pipe html.Pipeline) string {
 	}
 
 	var err error
-	for _, gear := range g.gears {
+	for _, gear := range g.Gears {
 		gear.Execute(pipe)
 		if pipe.Ctx.Err() != nil {
 			return html.EmptyString
 		}
 	}
 
-	err = gearTmpl.Execute(pipe.W, pipe)
+	err = gearTmpl.ExecuteTemplate(pipe.W, "combinedTxt", pipe)
+	//err = gearTmpl.Execute(pipe.W, pipe)
 	if err != nil {
 		panic(err)
 	}
 
 	return html.EmptyString
+}
+
+// TemplateContent outputs the content of the HTML template object used for this component, but not the script.
+func (g *Gear) TemplateContent() string {
+	buff := bytes.Buffer{}
+	pipe := html.NewPipeline(context.Background(), &http.Request{}, nil)
+	pipe.Self = g
+	pipe.W = &buff
+
+	err := gearTmpl.ExecuteTemplate(pipe.W, "justTemplate", pipe)
+	if err != nil {
+		panic(err)
+	}
+	return buff.String()
+}
+
+func validName(s string) error {
+	hasHyphen := false
+	if len(s) == 0 {
+		return fmt.Errorf("component name cannot have an empty name")
+	}
+	if s[0] < 97 || s[0] > 122 {
+		return fmt.Errorf("component name cannot have first letter that is not a lowercase alpha character")
+	}
+
+	for i := 1; i < len(s); i++ {
+		switch {
+		case s[i] == 45:
+			hasHyphen = true
+		case s[i] < 48: // Non numeric
+			return fmt.Errorf("component name cannot contain a non-numeric or non-ascii lower case letter, such as %q in %q", s[i], s)
+		case s[i] > 57: // Possible non-alpha
+			if s[i] < 97 || s[i] > 122 { // lower case ascii
+				return fmt.Errorf("component name cannot contain this non-numeric non-lower case letter %q in %q", s[i], s)
+			}
+		}
+	}
+
+	if !hasHyphen {
+		return fmt.Errorf("a componenent name must have a - in it, don't blame me, blame the spec")
+	}
+	return nil
 }

@@ -1,0 +1,41 @@
+html, body {
+    min-height: 100% !important;
+    min-width: 100% !important;
+    height: 100%;
+    width: 100%;
+}
+
+body {
+	position: absolute;
+ 	background-color: white;
+ 	padding: 0px;
+	margin: 0px;
+	border: 0px;
+}
+
+#rightPane {
+	position: absolute;
+	top: 102px;
+	right: 0%;
+
+	width: 75%;
+	height: calc(100% - 102px);
+	padding: 0px;
+	margin: 0px;
+	border: 0px;
+}
+
+#leftPane {
+	position: absolute;
+	top: 102px;
+	left: 0%;
+
+	width: 25%;
+	height: calc(100% - 102px);
+
+	overflow: auto;
+
+	padding: 0px;
+	margin: 0px;
+	border: 0px;
+}
