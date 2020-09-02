@@ -175,6 +175,10 @@ import (
 	"sync"
 )
 
+// insideWasm indicates that we are executing inside a WASM environment. This is set to true by
+// event_wasm.go's init() function that is guarded by build tags.
+var insideWasm = false
+
 var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
 {{- if not .Self.Component}}<!DOCTYPE html>{{end}}
 {{if not .Self.Component}}<html>
@@ -298,49 +302,6 @@ func (d *Doc) Init() error {
 	return nil
 }
 
-// Execute executes the internal templates and writes the output to the io.Writer. This is thread-safe.
-func (d *Doc) Execute(ctx context.Context, w io.Writer, r *http.Request) (err error) {
-	defer func() {
-		if rec := recover(); rec != nil {
-			err = fmt.Errorf("%v", rec)
-			return
-		}
-	}()
-
-	if !d.initDone {
-		return fmt.Errorf("Doc object did not have .Init() called before Execute()")
-	}
-
-	pipe := NewPipeline(ctx, r, w)
-	pipe.Self = d
-
-	if err := docTmpl.Execute(w, pipe); err != nil {
-		return err
-	}
-	return pipe.HadError()
-}
-
-// ExecuteAsGear uses the Pipeline provided instead of creating one internally. This is for internal use only
-// and no guarantees are made on its operation or that it will exist in the future. This is thread-safe.
-func (d *Doc) ExecuteAsGear(pipe Pipeline) string {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println(r)
-		}
-	}()
-
-	if !d.initDone {
-		pipe.Error(fmt.Errorf("Doc object did not have .Init() called before Execute()"))
-		return EmptyString
-	}
-	pipe.Self = d
-
-	if err := docTmpl.Execute(pipe.W, pipe); err != nil {
-		pipe.Error(err)
-	}
-	return EmptyString
-}
-
 // validate attempts to do basic validation of the Doc contents as best it can.
 func (d *Doc) validate() error {
 	if err := d.Body.validate(); err != nil {
@@ -453,6 +414,11 @@ func structToString(i interface{}) string {
 		name := ""
 		sf := t.Field(i)
 		if sf.Anonymous {
+			continue
+		}
+
+		// Names starting with _ are for internal use.
+		if strings.HasPrefix(sf.Name, "XXX") {
 			continue
 		}
 

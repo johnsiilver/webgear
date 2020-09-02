@@ -52,7 +52,7 @@ type FormElement interface {
 type Form struct {
 	GlobalAttrs
 
-	Events Events
+	Events *Events
 
 	// Action defines the action to be performed when the form is submitted.
 	// If the action attribute is omitted, the action is set to the current page.
@@ -353,6 +353,9 @@ type SelectElement interface {
 }
 
 type Select struct {
+	GlobalAttrs
+	Events *Events
+
 	// AutoFocus specifies that a text area should automatically get focus when the page loads.
 	AutoFocus bool `html:"attr"`
 	// Disabled specifies that a text area should be disabled.
@@ -389,11 +392,14 @@ func (s *Select) Attr() template.HTMLAttr {
 }
 
 var optionTmpl = template.Must(template.New("option").Parse(strings.TrimSpace(`
-<option {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
+<option {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>{{.Self.TagValue}}</option>
 `)))
 
 // Option defines an option in a select list.
 type Option struct {
+	GlobalAttrs
+	Events *Events
+
 	// Disabled specifies that a text area should be disabled.
 	Disabled bool `html:"attr"`
 	// Lablel specifies a shorter label for an option.
@@ -402,6 +408,8 @@ type Option struct {
 	Selected bool `html:"attr"`
 	// Value specifies the value to be sent to a server.
 	Value string
+	// TagValue is the text in the option.
+	TagValue string
 }
 
 func (o *Option) isSelectElement() {}

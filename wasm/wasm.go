@@ -23,16 +23,19 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"reflect"
 	"sync"
 	"syscall/js"
+	"time"
 
 	"github.com/johnsiilver/webgear/html"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
 
 type buffPool struct {
 	pool sync.Pool
@@ -62,21 +65,15 @@ type Wasm struct {
 	renderIn chan *html.Doc
 	updateMu sync.Mutex
 
-	ready chan struct{}
+	ready   chan struct{}
+	runMu   sync.Mutex
+	running bool
 }
 
 // New creates a new Wasm instance.  The doc passed will be used to replace the contents of the document once our app is
 // downloaded from the server.
-func New(doc *html.Doc) *Wasm {
-	if doc == nil {
-		panic("wasm.New() has nil doc argument")
-	}
-	if doc.Body == nil {
-		panic("wasm.New() has nil doc.Body argument")
-	}
-
+func New() *Wasm {
 	w := &Wasm{
-		doc:      doc,
 		renderIn: make(chan *html.Doc, 1),
 		ready:    make(chan struct{}),
 	}
@@ -84,9 +81,33 @@ func New(doc *html.Doc) *Wasm {
 	return w
 }
 
+// SetDoc sets the initial doc that will be displayed.
+func (w *Wasm) SetDoc(doc *html.Doc) {
+	w.runMu.Lock()
+	defer w.runMu.Unlock()
+	if w.running {
+		panic("cannot call Wasm.StartingDoc() once Run() has been called")
+	}
+	w.doc = doc
+}
+
 // Run executes replaces the content of the current document with the *html.Doc passed in New(). This never returns unless
 // the initial doc cannot be rendered, which will cause a panic.
 func (w *Wasm) Run(ctx context.Context) {
+	w.runMu.Lock()
+	if w.running {
+		panic("Wasm.Run() already called")
+	}
+	w.running = true
+	w.runMu.Unlock()
+
+	if w.doc == nil {
+		w.doc = &html.Doc{
+			Head: &html.Head{},
+			Body: &html.Body{},
+		}
+	}
+
 	req, _ := http.NewRequestWithContext(ctx, "POST", "/", bytes.NewBuffer([]byte{}))
 
 	buff := bufferPool.get()
@@ -101,11 +122,19 @@ func (w *Wasm) Run(ctx context.Context) {
 		panic(err)
 	}
 
-	log.Println("document as it is in Run() before it is set: ", js.Global().Get("document").Get("outerHTML"))
-	js.Global().Get("document").Set("outerHTML", buff.String())
-	log.Println("document as it us set in Run():\n", js.Global().Get("document").Get("outerHTML"))
-	log.Println("hello: ", js.Global().Get("document").Call("getElementById", "hello").Get("outerHTML"))
-	log.Println("myDiv: ", js.Global().Get("document").Call("getElementById", "myDiv"))
+	updater, err := html.NewDocUpdater(w.doc, docUpdaterHolder)
+	if err != nil {
+		panic(err)
+	}
+
+	//log.Println("document as it is in Run() before it is set: ", js.Global().Get("document").Get("documentElement").Get("outerHTML"))
+	js.Global().Get("document").Call("open")
+	js.Global().Get("document").Call("write", buff.String())
+	js.Global().Get("document").Call("close")
+	time.Sleep(2 * time.Second)
+	log.Println("document as it set in Run():\n", js.Global().Get("document").Get("documentElement").Get("innerHTML"))
+	docUpdaterHolder <- updater
+	w.doc.ExecuteDomCalls()
 
 	close(w.ready)
 	select {}
@@ -116,42 +145,83 @@ func (w *Wasm) Ready() {
 	<-w.ready
 }
 
-// UI creates a new UI object for changing the current UI output. This call is thread-safe, but blocks on
-// all future calls until *UI.Closed() is called on the returned object.
-func (w *Wasm) UI() *UI {
-	w.updateMu.Lock() // *UI.Closed() unlocks this.  Yeah, yeah, I KNOW!!!!!
-
-	return newUI(w.doc.Body, w)
-}
-
-// Func is a WASM function that is passed the Javascript "this" and any arguments. As this is attached to events, the return value
-// is never used and is here only to satisfy a type in the syscall/JS library.
-type Func func(this js.Value, args []js.Value) interface{}
-
-// Attach attaches a Func to an html.Element for a specific event like a mouse click. If release is set, the function will
+// AttachListener attaches a Func to an html.Element for a specific event like a mouse click (PLEASE READ THE REST BEFORE USE). If release is set, the function will
 // release its memory after being called. This should be used when something like a button will not be used again in this
 // evocation. Attach spins out a new goroutine for you to prevent blocking calls from pausing the event loop. Note that this
 // may have negative consequences on performance, but that pause is such a hastle to track down for every new dev that
-// I don't care about that. Finally, this attaches based on the element's .GlobalAttrs.ID. If that is not set, this is going to
+// I don't care about that. This func() attaches based on the element's .GlobalAttrs.ID. If that is not set, this is going to
 // panic.
-func Attach(event html.EventType, element html.Element, release bool, fn Func) html.Element {
-	var cb js.Func
-	js.FuncOf(
-		func(this js.Value, args []js.Value) interface{} {
-			go func() {
-				if release {
-					defer cb.Release()
-				}
-				fn(this, args)
-			}()
-			return nil
-		},
-	)
-	id := reflect.ValueOf(element).FieldByName("GlobalAttrs").Interface().(html.GlobalAttrs).ID
+func AttachListener(event html.ListenerType, release bool, fn html.WasmFunc, element html.Element) html.Element {
+	val := reflect.ValueOf(element)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("Element of type %T does not have an ID field, which must be present to attach an event", element))
+	}
+
+	if !val.FieldByName("GlobalAttrs").IsValid() {
+		panic(fmt.Errorf("cannot assign event(%s) to an element(%T) that has no ID set", event, element))
+	}
+
+	id := val.FieldByName("GlobalAttrs").Interface().(html.GlobalAttrs).ID
 	if id == "" {
 		panic(fmt.Errorf("cannot assign event(%s) to an element(%T) that has no ID set", event, element))
 	}
-	js.Global().Get("document").Call("getElementById", id).Call("addEventListener", string(event), fn)
+
+	// If we don't have an Events on the Element, create it.
+	eventsField := val.FieldByName("Events")
+	if !eventsField.IsValid() {
+		panic(fmt.Sprintf("Element type %T does not have an Events composition, so it cannot have Attach() called on it", element))
+	}
+	if eventsField.IsNil() {
+		e := &html.Events{}
+		eventsField.Set(reflect.ValueOf(e))
+	}
+
+	events := eventsField.Interface().(*html.Events)
+	events.AddWasmListener(id, event, fn, release)
+	return element
+}
+
+// AttachHandler attaches a Func to an html.Element for a specific event like a mouse click (PLEASE READ THE REST BEFORE USE). If release is set, the function will
+// release its memory after being called. This should be used when something like a button will not be used again in this
+// evocation. Attach spins out a new goroutine for you to prevent blocking calls from pausing the event loop. Note that this
+// may have negative consequences on performance, but that pause is such a hastle to track down for every new dev that
+// I don't care about that. This func() attaches based on the element's .GlobalAttrs.ID. If that is not set, this is going to
+// panic.
+func AttachHandler(event html.EventType, release bool, fn html.WasmFunc, element html.Element) html.Element {
+	val := reflect.ValueOf(element)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("Element of type %T does not have an ID field, which must be present to attach an event", element))
+	}
+
+	if !val.FieldByName("GlobalAttrs").IsValid() {
+		panic(fmt.Errorf("cannot assign event(%s) to an element(%T) that has no ID set", event, element))
+	}
+
+	id := val.FieldByName("GlobalAttrs").Interface().(html.GlobalAttrs).ID
+	if id == "" {
+		panic(fmt.Errorf("cannot assign event(%s) to an element(%T) that has no ID set", event, element))
+	}
+
+	// If we don't have an Events on the Element, create it.
+	eventsField := val.FieldByName("Events")
+	if !eventsField.IsValid() {
+		panic(fmt.Sprintf("Element type %T does not have an Events composition, so it cannot have Attach() called on it", element))
+	}
+	if eventsField.IsNil() {
+		e := &html.Events{}
+		eventsField.Set(reflect.ValueOf(e))
+	}
+
+	events := eventsField.Interface().(*html.Events)
+	events.AddWasmHandler(id, event, fn, release)
 	return element
 }
 
@@ -165,32 +235,27 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.doc.Execute(r.Context(), w, r)
 }
 
-// Handler will return a Handler that will return code to laod your
-func Handler(u *url.URL) (http.Handler, error) {
-	p := u.String()
-	if p == "" {
-		return nil, fmt.Errorf("the url passed(%s) to wasm.Handler was invalid", p)
-	}
+// docUpdaterHolder holds the single DocUpdater.
+var docUpdaterHolder = make(chan *html.DocUpdater, 1)
 
-	doc := &html.Doc{
-		Head: &html.Head{
-			Elements: []html.Element{
-				&html.Meta{Charset: "UTF-8"},
-				&html.Script{TagValue: template.JS(wasmExec)},
-				&html.Script{
-					TagValue: template.JS(
-						fmt.Sprintf(
-							`
-const go = new Go();
-WebAssembly.instantiateStreaming(fetch("%s"), go.importObject).then((result) => {
-	go.run(result.instance);
-});
-`, p),
-					),
-				},
-			},
-		},
+// GetDocUpdater gets a *DocUpdater for updating the DOM. There is only one of these available for
+// use at any time. Use DocUpdater.Render() to release it. This will block if another call has
+// not released it.
+func GetDocUpdater() *html.DocUpdater {
+	var du *html.DocUpdater
+	ticker := time.NewTicker(10 * time.Second)
+	for {
+		ticker.Reset(10 * time.Second)
+		select {
+		case du = <-docUpdaterHolder:
+		case <-ticker.C:
+			log.Println("GetDocUpdater() called and hasn't returned after 10 seconds. " +
+				"The last GetDocUpdater() caller didn't release it with a call to Render()")
+			continue
+		}
+		break
 	}
+	ticker.Stop()
 
-	return handler{doc: doc}, nil
+	return du
 }

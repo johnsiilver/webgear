@@ -48,6 +48,115 @@ const (
 	OnWheel        EventType = "onwheel"
 )
 
+// ListenerType are event types for event listeners (which are different from event handlers).
+type ListenerType string
+
+const (
+	LTError               ListenerType = "error"
+	LTAbort               ListenerType = "abort"
+	LTLoad                ListenerType = "load"
+	LTBeforeUnload        ListenerType = "beforeunload"
+	LTUnload              ListenerType = "unload"
+	LTOnline              ListenerType = "online"
+	LTOffline             ListenerType = "offline"
+	LTFocus               ListenerType = "focus"
+	LTBlur                ListenerType = "blur"
+	LTFocusIn             ListenerType = "focusin"
+	LTFocusOut            ListenerType = "focusout"
+	LTOpen                ListenerType = "open"
+	LTMessage             ListenerType = "message"
+	LTClose               ListenerType = "close"
+	LTPageHide            ListenerType = "pagehide"
+	LTPageShow            ListenerType = "pageshow"
+	LTPopState            ListenerType = "popstate"
+	LTAnimationStart      ListenerType = "animationstart"
+	LTAnimationCancel     ListenerType = "animationcancel"
+	LTAnimationEnd        ListenerType = "animationend"
+	LTAnimationIteration  ListenerType = "animationiteration"
+	LTTransitionStart     ListenerType = "transitionstart"
+	LTTransitionCancel    ListenerType = "transitioncancel"
+	LTTransitionEnd       ListenerType = "transitionend"
+	LTTransitionRun       ListenerType = "transitionrun"
+	LTReset               ListenerType = "reset"
+	LTSubmit              ListenerType = "submit"
+	LTBeforePrint         ListenerType = "beforeprint"
+	LTAfterPrint          ListenerType = "afterprint"
+	LTCompositionStart    ListenerType = "compositionstart"
+	LTCompositionUpdate   ListenerType = "compositionupdate"
+	LTCompositionEnd      ListenerType = "compositionend"
+	LTFullScreenChange    ListenerType = "fullscreenchange"
+	LTFullScreenError     ListenerType = "fullscreenerror"
+	LTResize              ListenerType = "resize"
+	LTScroll              ListenerType = "scroll"
+	LTCut                 ListenerType = "cut"
+	LTCopy                ListenerType = "copy"
+	LTPaste               ListenerType = "paste"
+	LTKeyDown             ListenerType = "keydown"
+	LTKeyPress            ListenerType = "keypress"
+	LTKeyUp               ListenerType = "keyup"
+	LTAuxClick            ListenerType = "auxclick"
+	LTClick               ListenerType = "click"
+	LTContextMenu         ListenerType = "contextmenu"
+	LTDblClick            ListenerType = "dblclick"
+	LTMoudDown            ListenerType = "mousedown"
+	LTMouseEnter          ListenerType = "mouseenter"
+	LTMouseLeave          ListenerType = "mouseleave"
+	LTMouseMove           ListenerType = "mousemove"
+	LTMouseOver           ListenerType = "mouseover"
+	LTMouseOut            ListenerType = "mouseout"
+	LTMouseUp             ListenerType = "mouseup"
+	LTPointerLockChange   ListenerType = "pointerlockchange"
+	LTPointerLockError    ListenerType = "pointerlockerror"
+	LTSelect              ListenerType = "select"
+	LTWheel               ListenerType = "wheel"
+	LTDrag                ListenerType = "drag"
+	LTDragEnd             ListenerType = "dragend"
+	LTDragEnter           ListenerType = "dragenter"
+	LTDragStart           ListenerType = "dragstart"
+	LTDragLeave           ListenerType = "dragleave"
+	LTDragOver            ListenerType = "dragover"
+	LTDrop                ListenerType = "drop"
+	LTAudioProcess        ListenerType = "audioprocess"
+	LTCanPlay             ListenerType = "canplay"
+	LTCanPlayThrough      ListenerType = "canplaythrough"
+	LTComplete            ListenerType = "complete"
+	LTDurationChange      ListenerType = "durationchange"
+	LTEmptied             ListenerType = "emptied"
+	LTEnded               ListenerType = "ended"
+	LTLoadedData          ListenerType = "loadeddata"
+	LTLoadedMetaData      ListenerType = "loadedmetadata"
+	LTPause               ListenerType = "pause"
+	LTPlay                ListenerType = "play"
+	LTPlaying             ListenerType = "playing"
+	LTRateChange          ListenerType = "ratechange"
+	LTSeeked              ListenerType = "seeked"
+	LTSeeking             ListenerType = "seeking"
+	LTStalled             ListenerType = "stalled"
+	LTSuspend             ListenerType = "suspend"
+	LTTimeUpdate          ListenerType = "timeupdate"
+	LTVolumeChange        ListenerType = "volumechange"
+	LTWaiting             ListenerType = "waiting"
+	LTLoadEnd             ListenerType = "loadend"
+	LTLoadStart           ListenerType = "loadstart"
+	LTProgress            ListenerType = "progress"
+	LTTimeout             ListenerType = "timeout"
+	LTStorage             ListenerType = "storage"
+	LTChecking            ListenerType = "checking"
+	LTDownloading         ListenerType = "downloading"
+	LTNoUpdate            ListenerType = "noupdate"
+	LTObsolete            ListenerType = "obsolete"
+	LTUpdateReady         ListenerType = "updateready"
+	LTBroadcast           ListenerType = "broadcast"
+	LTCheckboxStateChange ListenerType = "CheckboxStateChange"
+	LTHashChange          ListenerType = "hashchange"
+	LTInput               ListenerType = "input"
+	LTRadioStateChange    ListenerType = "radiostatechange"
+	LTReadyStateChange    ListenerType = "readystatechange"
+	LTValueChange         ListenerType = "valuechange"
+	LTInvalid             ListenerType = "invalid"
+	LTShow                ListenerType = "show"
+)
+
 type event struct {
 	key   string
 	value string
@@ -65,10 +174,10 @@ func (e *event) String() string {
 // This is not used directly, but accessible via HTML elements.
 // Once used in by an Execute(), the output will always be the same regardless of changes.
 type Events struct {
-	events []event
-
-	str     string
-	builder strings.Builder
+	events     []event
+	wasmEvents interface{}
+	str        string
+	builder    strings.Builder
 }
 
 func (e *Events) Attr() template.HTMLAttr {
@@ -92,8 +201,8 @@ func (e *Events) Attr() template.HTMLAttr {
 }
 
 // AddScript adds a script by name that is triggered when a specific event occurs.
-func (e *Events) AddScript(etype EventType, scriptName string) *Events {
-	e.events = append(e.events, event{string(etype), scriptName})
+func (e *Events) AddScript(et EventType, scriptName string) *Events {
+	e.events = append(e.events, event{string(et), scriptName})
 	return e
 }
 

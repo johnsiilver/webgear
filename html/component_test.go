@@ -4,7 +4,17 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"html/template"
 )
+
+type fakeComponent struct {
+	Element
+	name string
+}
+
+func (f fakeComponent) TagType() template.HTMLAttr {
+	return template.HTMLAttr(f.name)
+}
 
 func TestComponent(t *testing.T) {
 	tests := []struct {
@@ -18,13 +28,13 @@ func TestComponent(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				TagType:  "myComponent",
+				Gear: fakeComponent{name: "myComponent"},
 				TagValue: TextElement("value"),
 				Events:   (&Events{}).AddScript(OnError, "handleError"),
 			},
 
 			want: strings.TrimSpace(`
-<myComponent accesskey="key" onerror="handleError">
+<myComponent accesskey="key" id="myComponent" onerror="handleError">
 	value
 </myComponent>
 `),
