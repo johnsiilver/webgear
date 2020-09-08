@@ -1,0 +1,29 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	width: 100%;
+	height: 100%;
+}
+
+#banner-component{
+	left: 0px;
+	top: 0px;
+	height: 100px;
+}
+
+#calendar-component{
+	position: absolute;
+	left: 0px;
+	top: 100px;
+}
+
+#content-component{
+	position: absolute;
+	left: 400px;
+	top: 150px;
+	width: 100%;
+	height: 100%;
+}

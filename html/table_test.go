@@ -135,10 +135,10 @@ func TestTable(t *testing.T) {
 	</colgroup>
 	<thead accesskey="key" onerror="handleError">
 		<tr>
-			<th element="col 0 header" accesskey="key" onerror="handleError">
+			<th accesskey="key" onerror="handleError">
 				col 0 header
 			</th>
-			<th element="col 1 header" accesskey="key" onerror="handleError">
+			<th accesskey="key" onerror="handleError">
 				col 1 header
 			</th>
 		</tr>

@@ -9,28 +9,13 @@ import (
 	"syscall/js"
 )
 
-/*
-// NewUI constructs a new UI for altering items within the scope of the attached element.
-// Design Note: this is passed instead of *UI to do lazy initialization avoiding the setup
-// cost if this would not be used.
-type NewUI func() *UI
-
-
-// UI creates a new UI object for changing the current UI output. This call is thread-safe, but blocks on
-// all future calls until *UI.Closed() is called on the returned object.
-func UI() *UI {
-	w.updateMu.Lock() // *UI.Closed() unlocks this.  Yeah, yeah, I KNOW!!!!!
-
-	return newUI(w.doc.Body, w)
-}
-*/
-
 // WasmFunc is a Go function that is called by Javascript. WasmFunc is used to attach a Go function
 // to events in WASM code. "this" is set to the js.Value of the object that the event was attached to
 // in its state at the time of the call. root is set to the value of the root object that the "this"
 // object is within. Without componenets, this will be "document". If contained in a set of components,
-// this will be the component's shadowRoot that this element is contained within.
-type WasmFunc func(this js.Value, root js.Value)
+// this will be the component's shadowRoot that this element is contained within. 
+// "args" represents arguments sent to this function, which are application defined.
+type WasmFunc func(this js.Value, root js.Value, args interface{})
 
 type wasmEvent struct {
 	id            string
@@ -38,6 +23,7 @@ type wasmEvent struct {
 	listenerEvent ListenerType
 	release       bool
 	fn            WasmFunc
+	args interface{}
 }
 
 // Call calls the attached event passing along the component's shadowPath to allow finding the
@@ -88,31 +74,6 @@ func (w wasmEvent) Call(doc *Doc, shadowPath []string) {
 	panic("event attached for id(%s) with neither listenerEvent or handlerEvent")
 }
 
-/*
-func (w wasmEvent) mapper(doc *Doc, shadowPath []string) (idRoot, error) {
-	root := idRoot{}
-	if err := mapIDs(doc.Body, root); err != nil {
-		return nil, err
-	}
-	for _, p := range shadowPath {
-		r, ok := root[p]
-		if !ok {
-			return nil, fmt.Errorf("could not find shadow path(%s) element %s", strings.Join(shadowPath, "."), p)
-		}
-		root = r.component
-	}
-	return root, nil
-}
-
-func (w wasmEvent) UI(mapper func() (idRoot, error)) *UI {
-	root, err := mapper()
-	if err != nil {
-		log.Println("event on %q triggered UI() and mapper had error: %v", w.id, err)
-		return nil
-	}
-}
-*/
-
 // makeCallback wraps the user defined WasmFunc inside the js.Func that is needed to embed the func
 // in Javascript calls. "thisFunc" is called to get the current object the event is
 // attached to. "rootFunc" returns the current root object the attached object is within. If not
@@ -121,12 +82,11 @@ func (w wasmEvent) makeCallback(thisFunc, rootFunc func() js.Value) js.Func {
 	var cb js.Func
 	cb = js.FuncOf(
 		func(this js.Value, args []js.Value) interface{} {
-			log.Println("event fired")
 			go func() {
 				if w.release {
 					defer cb.Release()
 				}
-				w.fn(thisFunc(), rootFunc())
+				w.fn(thisFunc(), rootFunc(), w.args)
 			}()
 			return nil
 		},
@@ -138,7 +98,7 @@ func (w wasmEvent) makeCallback(thisFunc, rootFunc func() js.Value) js.Func {
 // the function is released (and unusable) after it is triggered. This is ignored if not
 // using the wasm module. This is exposed to allow the Wasm module to access this. There
 // is no compatibility promise for this method, you should use wasm.Attach().
-func (e *Events) AddWasmHandler(id string, et EventType, fn WasmFunc, release bool) *Events {
+func (e *Events) AddWasmHandler(id string, et EventType, fn WasmFunc, args interface{}, release bool) *Events {
 	if id == "" {
 		panic("AddWasmHandler cannot be called with id set to empty string")
 	}
@@ -158,6 +118,7 @@ func (e *Events) AddWasmHandler(id string, et EventType, fn WasmFunc, release bo
 			handlerEvent: et,
 			release:      release,
 			fn:           fn,
+			args: args,
 		},
 	)
 	return e
@@ -167,7 +128,7 @@ func (e *Events) AddWasmHandler(id string, et EventType, fn WasmFunc, release bo
 // the function is released (and unusable) after it is triggered. This is ignored if not
 // using the wasm module. This is exposed to allow the Wasm module to access this. There
 // is no compatibility promise for this method, you should use wasm.Attach().
-func (e *Events) AddWasmListener(id string, et ListenerType, fn WasmFunc, release bool) *Events {
+func (e *Events) AddWasmListener(id string, et ListenerType, fn WasmFunc, args interface{}, release bool) *Events {
 	if id == "" {
 		panic("AddWasm cannot be called with id set to empty string")
 	}
@@ -187,6 +148,7 @@ func (e *Events) AddWasmListener(id string, et ListenerType, fn WasmFunc, releas
 			listenerEvent: et,
 			release:       release,
 			fn:            fn,
+			args: args,
 		},
 	)
 	return e
@@ -194,7 +156,7 @@ func (e *Events) AddWasmListener(id string, et ListenerType, fn WasmFunc, releas
 
 // WasmEvents returns a list of functions that will attach Wasm events specified by
 // .AddWasm(). This is for internal use only and has no compatibility promises.
-func (e *Events) WasmEvents() []func(*Doc, []string) {
+func (e *Events) WasmEvents() ([]func(*Doc, []string)) {
 	if e.wasmEvents == nil {
 		return nil
 	}

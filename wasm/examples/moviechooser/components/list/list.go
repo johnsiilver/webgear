@@ -59,6 +59,16 @@ const (
 	Documentary = "Documentary"
 )
 
+var CategoryList = []string{
+	Action,
+	Drama,  
+	Comedy,
+	Romance,
+	SciFi,
+	Fantasy,
+	Documentary,
+}
+
 var Movies = []Movie{
 	{
 		"Blade Runner",

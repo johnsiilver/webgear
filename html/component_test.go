@@ -7,13 +7,18 @@ import (
 	"html/template"
 )
 
-type fakeComponent struct {
+type fakeGear struct {
+	GearType
 	Element
 	name string
 }
 
-func (f fakeComponent) TagType() template.HTMLAttr {
+func (f fakeGear) TagType() template.HTMLAttr {
 	return template.HTMLAttr(f.name)
+}
+
+func (f fakeGear) Execute(pipe Pipeline) string {
+	return EmptyString
 }
 
 func TestComponent(t *testing.T) {
@@ -28,7 +33,7 @@ func TestComponent(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Gear: fakeComponent{name: "myComponent"},
+				Gear: fakeGear{name: "myComponent"},
 				TagValue: TextElement("value"),
 				Events:   (&Events{}).AddScript(OnError, "handleError"),
 			},

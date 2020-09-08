@@ -14,13 +14,6 @@ import (
 	. "github.com/johnsiilver/webgear/html"
 )
 
-var categories = []string{
-	"Action",
-	"Drama",
-	"Romance",
-	"Sci-Fi/Fantasy",
-}
-
 // Filter provides a way of filtering our list by updating our list compoonent.
 type Filter struct {
 	listName string
@@ -60,14 +53,6 @@ func (f Filter) List(this js.Value, root js.Value) {
 		log.Printf("Filter.List: had error trying to update the list gear element: %s", err)
 		return
 	}
-
-	/*
-		log.Println("listGear template name: ", listGear.TemplateName())
-		js.Global().Get("document").Call("getElementById", listGear.TemplateName()).Set("outerHTML", listGear.TemplateContent())
-		log.Println("wrote: \n", listGear.TemplateContent())
-		js.Global().Call(string(listGear.LoaderName()))
-		listGear.Doc.ExecuteDomCalls()
-	*/
 }
 
 // New constructs a new component that shows a list of categories that are selectable.
@@ -89,9 +74,8 @@ func New(name string, listName string, w *wasm.Wasm, options ...component.Option
 			filter.List,
 			&Select{GlobalAttrs: GlobalAttrs{ID: "categories"}, Name: "categories"},
 		),
-		//&Select{GlobalAttrs: GlobalAttrs{ID: "categories"}, Name: "categories"},
 	)
-	for _, category := range categories {
+	for _, category := range list.CategoryList {
 		// Adds our option with an event attachment when somone selects something.
 		b.Add(&Option{GlobalAttrs: GlobalAttrs{ID: fmt.Sprintf("%s-option", category)}, Value: category, TagValue: category})
 	}

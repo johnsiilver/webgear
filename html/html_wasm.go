@@ -183,7 +183,6 @@ func (d *DocUpdater) UpdateDOM() error {
 
 	buff := &bytes.Buffer{}
 	for updateElement := range walkUpdatesOnly(d.doc) {
-		log.Printf("ELEMENT THAT UPDATES: %s(%T)", GetElementID(updateElement.Element), updateElement.Element)
 		if v, ok := updateElement.Element.(GearType); ok {
 			if err := v.UpdateDOM(); err != nil {
 				return err

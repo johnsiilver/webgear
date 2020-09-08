@@ -70,8 +70,7 @@ type Wasm struct {
 	running bool
 }
 
-// New creates a new Wasm instance.  The doc passed will be used to replace the contents of the document once our app is
-// downloaded from the server.
+// New creates a new Wasm instance.
 func New() *Wasm {
 	w := &Wasm{
 		renderIn: make(chan *html.Doc, 1),
@@ -116,6 +115,7 @@ func (w *Wasm) Run(ctx context.Context) {
 	if w.doc.Head == nil {
 		w.doc.Head = &html.Head{}
 	}
+
 	w.doc.Init()
 	err := w.doc.Execute(ctx, buff, req)
 	if err != nil {
@@ -130,11 +130,12 @@ func (w *Wasm) Run(ctx context.Context) {
 	//log.Println("document as it is in Run() before it is set: ", js.Global().Get("document").Get("documentElement").Get("outerHTML"))
 	js.Global().Get("document").Call("open")
 	js.Global().Get("document").Call("write", buff.String())
+	// Setup event on the Body so that all other events will load when the body has loaded.
+	w.initEvents()
 	js.Global().Get("document").Call("close")
-	time.Sleep(2 * time.Second)
+
 	log.Println("document as it set in Run():\n", js.Global().Get("document").Get("documentElement").Get("innerHTML"))
 	docUpdaterHolder <- updater
-	w.doc.ExecuteDomCalls()
 
 	close(w.ready)
 	select {}
@@ -145,13 +146,59 @@ func (w *Wasm) Ready() {
 	<-w.ready
 }
 
+// initEvents adds an event onto the window that loads all our other events
+// once the body has finished loading.
+func (w *Wasm) initEvents() {
+	bodyID := w.doc.Body.ID
+	bodyEvents := w.doc.Body.Events
+
+	if bodyEvents == nil {
+		w.doc.Body.Events = &html.Events{}
+		bodyEvents = w.doc.Body.Events
+	}
+	if bodyID == "" {
+		ga := w.doc.Body.GlobalAttrs
+		ga.ID = "bodyID"
+		bodyID = ga.ID
+		w.doc.Body.GlobalAttrs = ga
+	}
+
+	fn := func(this js.Value, root js.Value, args interface{}) {
+		w.doc.ExecuteDomCalls()
+	}
+
+	var cb js.Func
+	cb = js.FuncOf(
+		func(this js.Value, args []js.Value) interface{} {
+			log.Println("HEEEEEEEEEERRRRRRRRRRRRRRREEEEEEEEEEEEEEEEEE")
+			go func() {
+				wg := &sync.WaitGroup{}
+				defer func () {
+					wg.Wait()
+					cb.Release()
+				}()
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					fn(js.Value{}, js.Value{}, nil)
+				}()
+			}()
+			return nil
+		},
+	)
+
+	//js.Global().Call("addEventListener", "load", cb)
+	js.Global().Get("document").Call("addEventListener", "DOMContentLoaded", cb)
+	//bodyEvents.AddWasmHandler(bodyID, html.OnLoad, fn, nil, true)
+}
+
 // AttachListener attaches a Func to an html.Element for a specific event like a mouse click (PLEASE READ THE REST BEFORE USE). If release is set, the function will
 // release its memory after being called. This should be used when something like a button will not be used again in this
 // evocation. Attach spins out a new goroutine for you to prevent blocking calls from pausing the event loop. Note that this
 // may have negative consequences on performance, but that pause is such a hastle to track down for every new dev that
 // I don't care about that. This func() attaches based on the element's .GlobalAttrs.ID. If that is not set, this is going to
 // panic.
-func AttachListener(event html.ListenerType, release bool, fn html.WasmFunc, element html.Element) html.Element {
+func AttachListener(event html.ListenerType, release bool, fn html.WasmFunc, args interface{}, element html.Element) html.Element {
 	val := reflect.ValueOf(element)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
@@ -181,7 +228,7 @@ func AttachListener(event html.ListenerType, release bool, fn html.WasmFunc, ele
 	}
 
 	events := eventsField.Interface().(*html.Events)
-	events.AddWasmListener(id, event, fn, release)
+	events.AddWasmListener(id, event, fn, args, release)
 	return element
 }
 
@@ -190,8 +237,8 @@ func AttachListener(event html.ListenerType, release bool, fn html.WasmFunc, ele
 // evocation. Attach spins out a new goroutine for you to prevent blocking calls from pausing the event loop. Note that this
 // may have negative consequences on performance, but that pause is such a hastle to track down for every new dev that
 // I don't care about that. This func() attaches based on the element's .GlobalAttrs.ID. If that is not set, this is going to
-// panic.
-func AttachHandler(event html.EventType, release bool, fn html.WasmFunc, element html.Element) html.Element {
+// panic. As this is an event handler, it replaces any existing handlers. Use even listeners to assign multiple actions.
+func AttachHandler(event html.EventType, release bool, fn html.WasmFunc, args interface{}, element html.Element) html.Element {
 	val := reflect.ValueOf(element)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
@@ -221,7 +268,7 @@ func AttachHandler(event html.EventType, release bool, fn html.WasmFunc, element
 	}
 
 	events := eventsField.Interface().(*html.Events)
-	events.AddWasmHandler(id, event, fn, release)
+	events.AddWasmHandler(id, event, fn, args, release)
 	return element
 }
 

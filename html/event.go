@@ -175,7 +175,7 @@ func (e *event) String() string {
 // Once used in by an Execute(), the output will always be the same regardless of changes.
 type Events struct {
 	events     []event
-	wasmEvents interface{}
+	wasmEvents interface{} // []wasmEvent , but is an interface{} to prevent syscall/js to be loaded
 	str        string
 	builder    strings.Builder
 }
@@ -201,6 +201,7 @@ func (e *Events) Attr() template.HTMLAttr {
 }
 
 // AddScript adds a script by name that is triggered when a specific event occurs.
+// Do not use if using inside WASM, instead use calls in the wasm package.
 func (e *Events) AddScript(et EventType, scriptName string) *Events {
 	e.events = append(e.events, event{string(et), scriptName})
 	return e
