@@ -130,7 +130,7 @@ func New(port int, gear *component.Gear, options ...Option) *Viewer {
 				Elements: []html.Element{
 					html.Dynamic(dynamicColor{v.color}.Color),
 					gear,
-					&html.Component{TagType: template.HTMLAttr(gear.Name())},
+					&html.Component{Gear: gear},
 				},
 			},
 		}

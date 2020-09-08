@@ -38,8 +38,8 @@ func TestWalker(t *testing.T) {
 	}
 
 	got := []string{}
-	for element := range Walker(context.Background(), doc.Body) {
-		got = append(got, GetElementID(element))
+	for walked := range Walker(context.Background(), doc.Body) {
+		got = append(got, GetElementID(walked.Element))
 	}
 
 	if diff := pretty.Compare(want, got); diff != "" {

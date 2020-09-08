@@ -417,6 +417,15 @@ func structToString(i interface{}) string {
 			continue
 		}
 
+		// While we handle skipping Elements when their type is an interface or
+		// some slice like []Element, those don't handle when we do specific types
+		// like TextElement (which is based on string).  So this part eliminates
+		// key words that we know shouldn't get rendered as an attribute.
+		switch sf.Name {
+		case "Element", "Elements":
+			continue
+		}
+
 		// Names starting with _ are for internal use.
 		if strings.HasPrefix(sf.Name, "XXX") {
 			continue
@@ -542,7 +551,7 @@ func compileElements(elements []Element) error {
 	return nil
 }
 
-// compileElement complies the passed Element and ecursively all Elements contained in that Element.
+// compileElement complies the passed Element and recursively all Elements contained in that Element.
 func compileElement(element Element) error {
 	if i, ok := element.(Initer); ok {
 		if err := i.Init(); err != nil {

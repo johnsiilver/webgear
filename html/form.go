@@ -115,11 +115,14 @@ const (
 	RadioInput InputType = "radio"
 	// SubmitInput creates a submit button.
 	SubmitInput InputType = "submit"
+	// ButtonInput creates a button.
+	ButtonInput InputType = "button"
 )
 
 // Input creates a method of input within a form.
 type Input struct {
 	GlobalAttrs
+	*Events
 
 	// Type is the type of input.
 	Type InputType
@@ -134,7 +137,7 @@ func (i Input) isFormElement() {}
 func (i *Input) Execute(pipe Pipeline) string {
 	pipe.Self = i
 
-	if err := formTmpl.Execute(pipe.W, pipe); err != nil {
+	if err := inputTmpl.Execute(pipe.W, pipe); err != nil {
 		panic(err)
 	}
 
@@ -187,85 +190,6 @@ func (l *Label) Execute(pipe Pipeline) string {
 
 func (l *Label) Attr() template.HTMLAttr {
 	output := structToString(l)
-	return template.HTMLAttr(output)
-}
-
-var textAreaTmpl = template.Must(template.New("textarea").Parse(strings.TrimSpace(`
-<label {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
-{{- $data := .}}
-	{{- range .Self.Elements}}
-	{{.Execute $data}}
-	{{- end}}
-</label>
-`)))
-
-// WrapTA is used to define what type of text wrapping is done in a TextArea.
-type WrapTA string
-
-const (
-	HardWrap WrapTA = "hard"
-	SoftWrap WrapTA = "soft"
-)
-
-// TextArea defines a multi-text input control.
-type TextArea struct {
-	GlobalAttrs
-	Events *Events
-
-	// AutoFocus specifies that a text area should automatically get focus when the page loads.
-	AutoFocus bool `html:"attr"`
-	// Cols	specifies the visible width of a text area.
-	Cols uint
-	// DirName specifies that the text direction of the textarea will be submitted.
-	DirName string
-	// Disabled specifies that a text area should be disabled.
-	Disabled bool `html:"attr"`
-	// Form specifies which form the text area belongs to.
-	Form string
-	// MaxLength specifies the maximum number of characters allowed in the text area.
-	MaxLength uint
-	// Name specifies a name for a text area.
-	Name string
-	// Placeholder specifies a short hint that describes the expected value of a text area.
-	Placeholder string
-	// Readonly specifies that a text area should be read-only.
-	Readonly bool `html:"attr"`
-	// Required specifies that a text area is required/must be filled out.
-	Required bool `html:"attr"`
-	// Rows specifies the visible number of lines in a text area.
-	Rows uint
-	// Wrap specifies how the text in a text area is to be wrapped when submitted in a form.
-	Wrap WrapTA
-
-	Elements []Element
-}
-
-func (t *TextArea) isFormElement() {}
-
-func (t *TextArea) validate() error {
-	if t.DirName != "" {
-		switch {
-		case t.Name == "":
-			return fmt.Errorf("TextArea.DirName(%s) is set, but .Name is not", t.DirName)
-		case t.DirName != t.Name+".dir":
-			return fmt.Errorf("TextArea.DirName(%s) is set and not == to %s", t.DirName, t.Name+".dir")
-		}
-	}
-	return nil
-}
-
-func (t *TextArea) Execute(pipe Pipeline) string {
-	pipe.Self = t
-
-	if err := textAreaTmpl.Execute(pipe.W, pipe); err != nil {
-		panic(err)
-	}
-
-	return EmptyString
-}
-
-func (t *TextArea) Attr() template.HTMLAttr {
-	output := structToString(t)
 	return template.HTMLAttr(output)
 }
 

@@ -3,13 +3,11 @@
 package component
 
 import (
-	"log"
 	"syscall/js"
 )
 
 // UpdateDOM updates the DOM for this component.
 func (g *Gear) UpdateDOM() error {
-	log.Printf("%s GEAR UPDATE DOM CALLED", g.TemplateName())
 	js.Global().Get("document").Call("getElementById", g.TemplateName()).Set("outerHTML", g.TemplateContent())
 	js.Global().Call(string(g.LoaderName()))
 	return nil

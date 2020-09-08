@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"log"
 
 	"github.com/johnsiilver/webgear/html"
 )
@@ -16,6 +17,8 @@ type handler struct {
 
 // ServeHTTP implements http.Handler.ServeHTTP.
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("doing the wasm download")
+	defer log.Println("done")
 	h.doc.Execute(r.Context(), w, r)
 }
 
