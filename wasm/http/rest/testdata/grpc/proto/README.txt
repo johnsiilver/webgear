@@ -1,0 +1,1 @@
+/usr/local/bin/protoc -I =./ --go_out=plugins=grpc:./ --go_opt=paths=source_relative ./*.proto --grpc-gateway_out=logtostderr=true:. --proto_path=/Users/johnsiilver/trees/webgear/wasm/examples/snippets/grpc/
