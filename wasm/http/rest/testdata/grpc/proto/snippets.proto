@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package snippets;
+
+option go_package = "github.com/johnsiilver/webgear/wasm/examples/snippets/grpc/proto";
+
+message SaveReq {
+    int64 unixNano = 1;
+    string content = 2;
+}
+
+message SaveResp {}
+
+message GetReq {
+    int64 unixNano = 1;
+}
+
+message GetResp {
+    int64 unixNano = 1;
+    string content = 2;
+}
+
+service Snippets {
+    rpc Save (SaveReq) returns (SaveResp) {
+        option (google.api.http) = {
+                post: "/v1/snippetsService/save"
+                body: "*"
+        };
+    };
+    rpc Get (GetReq) returns (GetResp) {
+        option (google.api.http) = {
+                post: "/v1/snippetsService/get"
+                body: "*"
+        };
+    };
+}
