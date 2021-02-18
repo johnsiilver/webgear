@@ -181,7 +181,7 @@ var insideWasm = false
 
 var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
 {{- if not .Self.Component}}<!DOCTYPE html>{{end}}
-{{if not .Self.Component}}<html>
+{{if not .Self.Component}}<html {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Atr}}>
 	{{.Self.Head.Execute .}}
 {{- end}}
 	{{.Self.Body.Execute .}}
@@ -254,6 +254,9 @@ func (p Pipeline) HadError() error {
 type Doc struct {
 	Head *Head
 	Body *Body
+
+	GlobalAttrs
+	*Events
 
 	// Pretty says to make the HTML look pretty before outputting.
 	Pretty bool
