@@ -229,10 +229,10 @@ func New(name string, doc *html.Doc, options ...Option) (*Gear, error) {
 
 	walkCtx, cancel := context.WithCancel(context.Background())
 	for walked := range html.Walker(walkCtx, doc.Body) {
-		if _, ok := walked.Element.(*Gear); ok {
+		if g, ok := walked.Element.(*Gear); ok {
 			cancel()
 			return nil, fmt.Errorf("WebGear Component(%s) had another component(%s) added directly to the passed *html.Doc," +
-				"this can only be added using the component.AddGear() option to allow correct rendered ordering")
+				"this can only be added using the component.AddGear() option to allow correct rendered ordering", name, g.name)
 		}
 	}
 
