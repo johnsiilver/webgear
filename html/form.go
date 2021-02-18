@@ -157,7 +157,7 @@ func (i Input) validate() error {
 }
 
 var labelTmpl = template.Must(template.New("label").Parse(strings.TrimSpace(`
-<label {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
+<label {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 {{- $data := .}}
 	{{- range .Self.Elements}}
 	{{.Execute $data}}
@@ -168,11 +168,16 @@ var labelTmpl = template.Must(template.New("label").Parse(strings.TrimSpace(`
 // Label element is useful for screen-reader users, because the screen-reader will read out loud the label
 // when the user is focused on the input element.
 type Label struct {
+	GlobalAttrs
+	*Events
+
 	// For specifies the id of the form element the label should be bound to.
 	For string
 	// Form specifies which form the label belongs to.
 	Form string
 
+	// Elements are HTML elements that are contained in the Label tag.
+	// Usually a TextElement and sometimes the input tag the Label is for.
 	Elements []Element
 }
 
