@@ -181,7 +181,7 @@ var insideWasm = false
 
 var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
 {{- if not .Self.Component}}<!DOCTYPE html>{{end}}
-{{if not .Self.Component}}<html {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Atr}}>
+{{if not .Self.Component}}<html {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}>
 	{{.Self.Head.Execute .}}
 {{- end}}
 	{{.Self.Body.Execute .}}
