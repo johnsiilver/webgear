@@ -32,3 +32,5 @@ func (d *Div) Execute(pipe Pipeline) string {
 
 	return EmptyString
 }
+
+func (d *Div) isFormElement() {}
