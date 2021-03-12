@@ -34,6 +34,24 @@ const (
 	StylesheetRL  RelationshipLink = "stylesheet"
 )
 
+// AsLink is a a value used in the Link As attribute.
+type AsLink string
+
+const (
+	AsAudio    AsLink = "audio"
+	AsDocument AsLink = "document"
+	AsEmbed    AsLink = "embed"
+	AsFetch    AsLink = "fetch"
+	AsFont     AsLink = "font"
+	AsImage    AsLink = "image"
+	AsObject   AsLink = "object"
+	AsScript   AsLink = "script"
+	AsStyle    AsLink = "style"
+	AsTrack    AsLink = "track"
+	AsVideo    AsLink = "video"
+	AsWorker   AsLink = "worker"
+)
+
 type Sizes struct {
 	Height int
 	Width  int
@@ -79,6 +97,12 @@ type Link struct {
 
 	// Rel (required) specifies the relationship between the current document and the linked document.
 	Rel RelationshipLink
+
+	// As is only used when rel="preload" or rel="prefetch" has been set on the <link> element.
+	// It specifies the type of content being loaded by the <link>, which is necessary for request matching,
+	// application of correct content security policy, and setting of correct Accept request header.
+	// Furthermore, rel="preload" uses this as a signal for request prioritization.
+	As AsLink
 
 	// Sizes specifies the size of the linked resource. Only for rel="icon".
 	Sizes Sizes

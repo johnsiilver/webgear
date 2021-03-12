@@ -13,7 +13,7 @@ import (
 // to events in WASM code. "this" is set to the js.Value of the object that the event was attached to
 // in its state at the time of the call. root is set to the value of the root object that the "this"
 // object is within. Without componenets, this will be "document". If contained in a set of components,
-// this will be the component's shadowRoot that this element is contained within. 
+// this will be the component's shadowRoot that this element is contained within.
 // "args" represents arguments sent to this function, which are application defined.
 type WasmFunc func(this js.Value, root js.Value, args interface{})
 
@@ -23,7 +23,7 @@ type wasmEvent struct {
 	listenerEvent ListenerType
 	release       bool
 	fn            WasmFunc
-	args interface{}
+	args          interface{}
 }
 
 // Call calls the attached event passing along the component's shadowPath to allow finding the
@@ -118,7 +118,7 @@ func (e *Events) AddWasmHandler(id string, et EventType, fn WasmFunc, args inter
 			handlerEvent: et,
 			release:      release,
 			fn:           fn,
-			args: args,
+			args:         args,
 		},
 	)
 	return e
@@ -148,7 +148,7 @@ func (e *Events) AddWasmListener(id string, et ListenerType, fn WasmFunc, args i
 			listenerEvent: et,
 			release:       release,
 			fn:            fn,
-			args: args,
+			args:          args,
 		},
 	)
 	return e
@@ -156,7 +156,7 @@ func (e *Events) AddWasmListener(id string, et ListenerType, fn WasmFunc, args i
 
 // WasmEvents returns a list of functions that will attach Wasm events specified by
 // .AddWasm(). This is for internal use only and has no compatibility promises.
-func (e *Events) WasmEvents() ([]func(*Doc, []string)) {
+func (e *Events) WasmEvents() []func(*Doc, []string) {
 	if e.wasmEvents == nil {
 		return nil
 	}

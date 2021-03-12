@@ -36,6 +36,7 @@ func TestLink(t *testing.T) {
 				Href:           u,
 				CrossOrigin:    AnnonymousCO,
 				HrefLang:       "english",
+				As:             AsVideo,
 				Media:          "media",
 				ReferrerPolicy: Origin,
 				Rel:            AlternateRL,
@@ -43,7 +44,7 @@ func TestLink(t *testing.T) {
 				Type:           "type",
 			},
 			want: `<link href="/subpage" crossorigin="anonymous" hreflang="english" media="media" ` +
-				`referrerpolicy="origin" rel="alternate" sizes="10x5" type="type" accesskey="key">`,
+				`referrerpolicy="origin" rel="alternate" as="video" sizes="10x5" type="type" accesskey="key">`,
 		},
 	}
 

@@ -19,7 +19,7 @@ type WrapType string
 const (
 	// SoftWrap specifies the text in the textarea is not wrapped when submitted in a form. This is default.
 	SoftWrap WrapType = "soft"
-	// HardWrap specifies the text in the textarea is wrapped (contains newlines) 
+	// HardWrap specifies the text in the textarea is wrapped (contains newlines)
 	// when submitted in a form. When "hard" is used, the cols attribute must be specified.
 	HardWrap WrapType = "hard"
 )
