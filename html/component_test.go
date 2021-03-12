@@ -2,9 +2,9 @@ package html
 
 import (
 	"context"
+	"html/template"
 	"strings"
 	"testing"
-	"html/template"
 )
 
 type fakeGear struct {
@@ -33,7 +33,7 @@ func TestComponent(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Gear: fakeGear{name: "myComponent"},
+				Gear:     fakeGear{name: "myComponent"},
 				TagValue: TextElement("value"),
 				Events:   (&Events{}).AddScript(OnError, "handleError"),
 			},

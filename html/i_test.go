@@ -24,8 +24,8 @@ func TestI(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Element:       TextElement("text"),
-				Events:         (&Events{}).AddScript(OnError, "handleError"),
+				Element: TextElement("text"),
+				Events:  (&Events{}).AddScript(OnError, "handleError"),
 			},
 			want: `<i  accesskey="key" onerror="handleError">text
 </i>`,

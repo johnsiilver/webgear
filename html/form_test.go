@@ -8,16 +8,16 @@ import (
 
 func TestLabel(t *testing.T) {
 	tests := []struct {
-		desc string
-		label   *Label
-		want string
+		desc  string
+		label *Label
+		want  string
 	}{
 		{
-			desc: "Empty attributes",
-			label:   &Label{},
-			want: "<label  >\n</label>",
+			desc:  "Empty attributes",
+			label: &Label{},
+			want:  "<label  >\n</label>",
 		},
-		
+
 		{
 			desc: "All attributes + 1 global + 1 event + 1 element",
 			label: &Label{

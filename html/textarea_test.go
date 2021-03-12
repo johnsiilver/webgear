@@ -8,9 +8,9 @@ import (
 
 func TestTextArea(t *testing.T) {
 	tests := []struct {
-		desc string
+		desc     string
 		textArea *TextArea
-		want string
+		want     string
 	}{
 		{
 			desc: "All attributes + 1 global + 1 event ",
@@ -18,20 +18,20 @@ func TestTextArea(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Name: "name",
-				Form: "formid",
-				Cols: 10,
-				MaxLength: 1000,
-				Rows: 40,
-				DirName: "name.dir",
-				Wrap: HardWrap,
+				Name:        "name",
+				Form:        "formid",
+				Cols:        10,
+				MaxLength:   1000,
+				Rows:        40,
+				DirName:     "name.dir",
+				Wrap:        HardWrap,
 				Placeholder: "placeholder",
-				AutoFocus: true,
-				Disabled: true,
-				ReadOnly: true, 
-				Required: true,
-				Element: TextElement("text"),
-				Events:   (&Events{}).AddScript(OnError, "handleError"),
+				AutoFocus:   true,
+				Disabled:    true,
+				ReadOnly:    true,
+				Required:    true,
+				Element:     TextElement("text"),
+				Events:      (&Events{}).AddScript(OnError, "handleError"),
 			},
 
 			want: strings.TrimSpace(`
