@@ -47,7 +47,7 @@ type TextArea struct {
 	Wrap WrapType
 	// Placeholder specifies a short hint that describes the expected value of a text area.
 	Placeholder string
-	
+
 	// AutoFocus specifies that a text area should automatically get focus when the page loads.
 	AutoFocus bool `html:"attr"`
 	// Disabled specifies that a text area should be disabled.
