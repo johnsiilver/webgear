@@ -16,7 +16,7 @@ func WeekOf(t time.Time) time.Time {
 	return t
 }
 
-// SafeUnixNano calls WeekOf() and then zeros out the hour, minute, second, nsec fields 
+// SafeUnixNano calls WeekOf() and then zeros out the hour, minute, second, nsec fields
 // and returns the UnixNano() value.
 func SafeUnixNano(t time.Time) int64 {
 	t = WeekOf(t)

@@ -24,7 +24,7 @@ func (b *buildCalendar) doc() *Doc {
 	// Add our outer stylesheet and containing div.
 	b.build.Add(
 		&Link{
-			Rel: "stylesheet", 
+			Rel:  "stylesheet",
 			Href: URLParse(b.args.cssPath()),
 		},
 	)
@@ -37,7 +37,7 @@ func (b *buildCalendar) doc() *Doc {
 	return b.headerBar()
 }
 
-func (b *buildCalendar) headerBar() *Doc{
+func (b *buildCalendar) headerBar() *Doc {
 	b.build.Into(&Ul{})
 
 	if b.args.MonthArrows {
@@ -86,25 +86,25 @@ func (b *buildCalendar) listDays() *Doc {
 	// find the first Sunday.
 	for {
 		if start.Weekday() != time.Sunday {
-			start = start.Add(-24*time.Hour)
+			start = start.Add(-24 * time.Hour)
 			continue
 		}
 		break
 	}
 
 	// From that first sunday, start displaying until run out of days of the month.
-	for ;start.Month() <= date.Month();start = start.Add(24 * time.Hour) {
+	for ; start.Month() <= date.Month(); start = start.Add(24 * time.Hour) {
 		dayStr := fmt.Sprintf("%d", start.Day())
 
 		// We print out the few days in the calendar from the previous month and
 		// make them no lcoick.
 		if start.Month() != date.Month() {
 			// Makes it unclickable and blank.
-			b.build.Into(&Span{GlobalAttrs: GlobalAttrs{Class:"noclick"}})
+			b.build.Into(&Span{GlobalAttrs: GlobalAttrs{Class: "noclick"}})
 			b.build.Add(TextElement(fmt.Sprintf("%d", start.Day())))
 			b.build.Up()
 			continue
-		
+
 		}
 		// Retrieve all our day information using their DayFunc.
 		day := Day{}
@@ -116,24 +116,24 @@ func (b *buildCalendar) listDays() *Doc {
 		var span *Span
 		if day.IsSelected {
 			span = &Span{
-				GlobalAttrs: GlobalAttrs{ID: "day"+dayStr, Class:"circle"},
+				GlobalAttrs: GlobalAttrs{ID: "day" + dayStr, Class: "circle"},
 			}
-		}else{ // No circle
-			span = &Span{GlobalAttrs: GlobalAttrs{ID: "day"+dayStr}}
+		} else { // No circle
+			span = &Span{GlobalAttrs: GlobalAttrs{ID: "day" + dayStr}}
 		}
 
 		// If they wanted the day to be clickable with an event.
 		if day.OnClick != nil {
 			b.build.Into(
 				wasm.AttachListener(
-					LTClick, 
-					false, 
+					LTClick,
+					false,
 					day.OnClick,
 					DayEventArgs{Month: start.Month(), Day: start.Day(), Year: start.Year()},
 					span,
 				),
 			)
-		}else{
+		} else {
 			b.build.Into(span)
 		}
 		b.build.Add(TextElement(dayStr))
@@ -148,16 +148,16 @@ type Args struct {
 	// this will default to "/static/components/calendar/calendar.css", which is likely
 	// incorrect for your application.
 	CSSPath string
-	
+
 	// Month is the month the calendar represents.
 	Month time.Month
-	
+
 	// Year is the year the calendar represents.
 	Year int
 
 	// DayFunc is called while building the calendar for a month. The function
 	// here returns information that is used to determines how a day is displayed
-	// and what 
+	// and what
 	DayFunc func(month time.Month, day, year int) Day
 
 	// MonthArrows indciate that you want arrows that move the calendar one
@@ -183,7 +183,7 @@ func (a *Args) month() time.Month {
 }
 
 func (a *Args) year() int {
-	if a == nil || a.Year == 0{
+	if a == nil || a.Year == 0 {
 		return time.Now().In(time.FixedZone(time.Now().Zone())).Year()
 	}
 	return a.Year
@@ -209,8 +209,8 @@ type Day struct {
 
 type DayEventArgs struct {
 	Month time.Month
-	Day int
-	Year int
+	Day   int
+	Year  int
 }
 
 /*
@@ -219,10 +219,9 @@ func isNextMonthFuture(year, month int) bool {
 }
 */
 
-
 // New constructs a new component that shows a calendar.
 func New(name string, contentName string, args *Args, w *wasm.Wasm, options ...component.Option) (*component.Gear, error) {
-	cal := buildCalendar{args: args} 
+	cal := buildCalendar{args: args}
 
 	gear, err := component.New(name, cal.doc())
 	if err != nil {

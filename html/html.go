@@ -333,6 +333,10 @@ type Initer interface {
 	Init() error
 }
 
+type validator interface {
+	validate() error
+}
+
 // outputAble details if a slice or struct should be output to when doing structToString.
 type outputAble interface {
 	outputAble()

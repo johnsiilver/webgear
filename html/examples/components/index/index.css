@@ -1,0 +1,23 @@
+html, body {
+    min-height: 100% !important;
+    min-width: 100% !important;
+    height: 100%;
+    width: 100%;
+}
+
+body {
+	position: absolute;
+ 	background-color: white;
+ 	padding: 0px;
+	margin: 0px;
+	border: 0px;
+}
+
+#banner {
+	display: block;
+	position:absolute;
+	top: 0px;
+	left: 0px;
+	padding: 0px;
+	margin: 0px;
+}

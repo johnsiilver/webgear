@@ -1,30 +1,30 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"os"
+	"log"
 	"net"
 	"net/http"
-	"log"
-	"context"
-	"time"
 	"net/url"
+	"os"
+	"time"
 
 	"github.com/johnsiilver/webgear/handlers"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 
+	server "github.com/johnsiilver/webgear/wasm/examples/snippets/grpc"
 	httpHandler "github.com/johnsiilver/webgear/wasm/http"
-	server "github.com/johnsiilver/webgear/wasm/examples/snippets/grpc" 
 
 	pb "github.com/johnsiilver/webgear/wasm/examples/snippets/grpc/proto"
 )
 
 var (
 	grpcPort = flag.Int("grpc_port", 9000, "The port @ 127.0.0.1 to run on grpc on")
-	port = flag.Int("port", 8080, "The port to run REST on")
+	port     = flag.Int("port", 8080, "The port to run REST on")
 	httpPort = flag.Int("http_port", 8081, "The port to run our http pages on")
 )
 
@@ -36,7 +36,7 @@ func setupGRPC(addr string) {
 	// You could expose both if you wanted to.
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-			log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	snippetsServ := server.NewService(snippetsDir)
@@ -49,12 +49,12 @@ func setupGRPC(addr string) {
 }
 
 // setupREST sets up a REST service on lis that proxies requests to our GRPC service at grpcAddr.
-func setupREST(ctx context.Context, addr string,  grpcAddr string) {
+func setupREST(ctx context.Context, addr string, grpcAddr string) {
 	// Now we are going to setup our reverse proxy.
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()} // Only local things need to talk to grpc, so no TLS.
 	if err := pb.RegisterSnippetsHandlerFromEndpoint(ctx, mux, grpcAddr, opts); err != nil {
-			panic(err)
+		panic(err)
 	}
 
 	httpServ := &http.Server{Addr: addr, Handler: mux}
@@ -82,7 +82,7 @@ func setupWASM(addr, restAddr string) {
 
 	h := handlers.New(handlers.DoNotCache())
 	server := &http.Server{
-		Addr:          addr,
+		Addr:           addr,
 		Handler:        h.ServerMux(),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -114,8 +114,8 @@ func main() {
 	}
 
 	setupGRPC(grpcAddr)
-	setupREST(ctx, gatewayAddr,  grpcAddr)
+	setupREST(ctx, gatewayAddr, grpcAddr)
 	setupWASM(httpAddr, gatewayAddr)
 
-	select{}
+	select {}
 }

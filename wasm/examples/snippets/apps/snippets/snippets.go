@@ -4,11 +4,10 @@ import (
 	"context"
 	"log"
 
-
 	"github.com/johnsiilver/webgear/wasm"
 	"github.com/johnsiilver/webgear/wasm/examples/snippets/apps/snippets/components/banner"
-	"github.com/johnsiilver/webgear/wasm/examples/snippets/apps/snippets/components/content"
 	"github.com/johnsiilver/webgear/wasm/examples/snippets/apps/snippets/components/calendar"
+	"github.com/johnsiilver/webgear/wasm/examples/snippets/apps/snippets/components/content"
 
 	. "github.com/johnsiilver/webgear/html"
 )
@@ -18,7 +17,7 @@ func main() {
 
 	bannerGear, err := banner.New("banner-component")
 	if err != nil {
-		panic(err) 
+		panic(err)
 	}
 
 	contentGear, err := content.New("content-component", content.Args{Mode: content.View, RestEndpoint: "127.0.0.1:8081"}, w)
@@ -27,11 +26,11 @@ func main() {
 	}
 
 	calendarGear, err := calendar.New(
-		"calendar-component", 
-		"content-component", 
+		"calendar-component",
+		"content-component",
 		calendar.Args{
 			CSSPath: "/static/apps/snippets/components/calendar/calendar.css",
-		}, 
+		},
 		w,
 	)
 	if err != nil {
@@ -63,7 +62,6 @@ func main() {
 				&Component{Gear: bannerGear},
 				&Component{Gear: calendarGear},
 				&Component{Gear: contentGear},
-
 			},
 		},
 	}

@@ -66,7 +66,7 @@ var aTmpl = template.Must(template.New("a").Parse(strings.TrimSpace(`
 // A defines a hyperlink, which is used to link from one page to another.
 type A struct {
 	// Href specifies the URL of the page the link goes to.
-	Href string
+	Href *url.URL
 	// Download specifies that the target will be downloaded when a user clicks on the hyperlink.
 	Download bool `html:"attr"`
 	// HrefLang specifies the language of the linked document.
