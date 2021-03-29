@@ -2,6 +2,8 @@
   ⭐ &nbsp;&nbsp;<strong>the project to show your appreciation.</strong> :arrow_upper_right:
 </p>
 
+![webgear logo](https://github.com/johnsiilver/webgear/blob/master/webgear.png)
+
 [![GoDev](https://img.shields.io/static/v1?label=godev&message=reference&color=00add8)](https://pkg.go.dev/github.com/johnsiilver/webgear)
 
 WebGear provides libraries to make Go the single language for writing web applications.
