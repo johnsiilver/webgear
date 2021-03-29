@@ -14,7 +14,7 @@ bootstrapping JS code.
 This package along with the webgear/html and webgear/component remove the need to use HTML or JS within
 your application.
 
-The app handles all the client display while and should fetch content from the server in which to display.
+The app handles all the client display and should fetch content from the server in which to display.
 This should be done via REST or other HTTP based calls.
 */
 package wasm

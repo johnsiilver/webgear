@@ -44,6 +44,16 @@ const (
 	AllowTopNavigation Sandbox = "allow-top-navigation"
 )
 
+// IFrameLoad indicates when to load an IFrame's content.
+type IFrameLoad string
+
+const(
+	// EagerILoad loads the IFrame even if it isn't visible yet on the screen. This is the default.
+	EagerILoad IFrameLoad = "eager"
+	// LazyILoad loads the IFrame only when it becomes visible on the screen.
+	LazyILoad IFrameLoad = "lazy"
+)
+
 // IFrame represents a division tag.
 type IFrame struct {
 	GlobalAttrs
@@ -68,6 +78,8 @@ type IFrame struct {
 	ReferrerPolicy ReferrerPolicy
 	// Sandboxing enables an extra set of restrictions for the content in an <iframe>.
 	Sandboxing Sandboxing
+	// Loading indicates the way the browser loads the iframe (immediately or when on the visible screen).
+	Loading IFrameLoad
 
 	Events *Events
 }
