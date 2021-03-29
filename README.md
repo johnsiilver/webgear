@@ -37,15 +37,17 @@ You still must deal with CSS, but I provide web components so you can keep your 
 ## Production Quality?
 
 No idea. I've used it for personal projects and such. It has some rough edges. I don't support all tags (there are a lot).
-Its performant for what I do, but if I was Google's front page I doubt it. You probably aren't Google's frontpage.
+Its performant for what I do, but if I was Google's front page I doubt it. 
 
-Calls will change, hoever I don't expect any major "destroy everything" type of changes. But I'm sure it will get lots
+You probably aren't Google's frontpage.
+
+Calls will change, however I don't expect any major "destroy everything" type of changes. But I'm sure it will get lots
 of refinements. Most will go unnoticed. 
 
 I doubt I will ever release a 1.0. I'm not in love with Go's semantic versioning where I have to create new v2/ directories
 and such. I get why, I just don't like it.
 
-But I will version an any breaking changes on the v0 minor version and patches for additions.
+I will version any breaking changes on the v0 minor version and patches for additions.
 
 ## Is this a Framework?
 
