@@ -3,9 +3,9 @@ package http
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"net/url"
-	"log"
 
 	"github.com/johnsiilver/webgear/html"
 )

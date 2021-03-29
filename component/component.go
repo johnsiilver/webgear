@@ -231,7 +231,7 @@ func New(name string, doc *html.Doc, options ...Option) (*Gear, error) {
 	for walked := range html.Walker(walkCtx, doc.Body) {
 		if g, ok := walked.Element.(*Gear); ok {
 			cancel()
-			return nil, fmt.Errorf("WebGear Component(%s) had another component(%s) added directly to the passed *html.Doc," +
+			return nil, fmt.Errorf("WebGear Component(%s) had another component(%s) added directly to the passed *html.Doc,"+
 				"this can only be added using the component.AddGear() option to allow correct rendered ordering", name, g.name)
 		}
 	}
@@ -263,7 +263,7 @@ func (g *Gear) TagType() template.HTMLAttr {
 // to HTML with this name (output with TemplateName() and LoaderName()), but we still need a way
 // to reference them in our Doc tree. This is that ID.
 func (g *Gear) GearID() string {
-	return "gear-"+ g.name
+	return "gear-" + g.name
 }
 
 // LoaderName is the name of the JS function that defines the HTML custom element and causes the custom element to render.

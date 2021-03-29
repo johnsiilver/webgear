@@ -27,7 +27,7 @@ func TestA(t *testing.T) {
 				GlobalAttrs: GlobalAttrs{
 					AccessKey: "key",
 				},
-				Href:           "/subpage",
+				Href:           URLParse("/subpage"),
 				Download:       true,
 				HrefLang:       "english",
 				Media:          "query",

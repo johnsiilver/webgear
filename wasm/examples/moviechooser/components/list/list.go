@@ -61,7 +61,7 @@ const (
 
 var CategoryList = []string{
 	Action,
-	Drama,  
+	Drama,
 	Comedy,
 	Romance,
 	SciFi,

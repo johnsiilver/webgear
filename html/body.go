@@ -51,5 +51,13 @@ func (b *Body) validate() error {
 	if b == nil {
 		return fmt.Errorf("Body element is not defined")
 	}
+	for _, e := range b.Elements {
+		v, ok := e.(validator)
+		if ok {
+			if err := v.validate(); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }

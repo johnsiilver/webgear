@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"net/url"
 	"sync"
+	"time"
 
 	"github.com/johnsiilver/webgear/handlers"
 	wasmHTTP "github.com/johnsiilver/webgear/wasm/http"
@@ -18,8 +18,8 @@ import (
 // Viewer provides an HTTP server that will run to view an individual component that
 // is inside a wasm binary.
 type Viewer struct {
-	port  int
-	binName string
+	port       int
+	binName    string
 	useModules bool
 
 	mu sync.Mutex
@@ -56,9 +56,9 @@ func UseModules() Option {
 // relaunched by simply hitting 'r' in the terminal.
 func New(port int, binName string, options ...Option) *Viewer {
 	v := &Viewer{
-		port: port,
+		port:    port,
 		binName: binName,
-		h:    handlers.New(handlers.DoNotCache()),
+		h:       handlers.New(handlers.DoNotCache()),
 	}
 
 	for _, o := range options {
@@ -69,7 +69,7 @@ func New(port int, binName string, options ...Option) *Viewer {
 		panic(err)
 	}
 
-	u, err := url.Parse("/static/viewer/main/"+binName)
+	u, err := url.Parse("/static/viewer/main/" + binName)
 	if err != nil {
 		panic(err)
 	}
@@ -94,7 +94,7 @@ func (v *Viewer) build() error {
 
 	if v.useModules {
 		os.Setenv("GO111MODULE", "on")
-	}else{
+	} else {
 		os.Setenv("GO111MODULE", "off")
 	}
 	os.Setenv("GOOS", "js")
@@ -114,7 +114,7 @@ func (v *Viewer) build() error {
 // Run runs the viewer and will block forever.
 func (v *Viewer) Run() {
 	// disable input buffering
-    exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
 	go func() {
 		var b []byte = make([]byte, 1)
 		for {
@@ -122,10 +122,10 @@ func (v *Viewer) Run() {
 			if string(b) == "r" {
 				if err := v.build(); err == nil {
 					fmt.Println("wasm rebuild SUCCEEDED, reload web browser")
-				}else{
+				} else {
 					fmt.Println("wasm rebuild FAILED: ", err)
 				}
-			}else{
+			} else {
 				fmt.Printf("I don't know what %q is\n", string(b))
 			}
 		}
