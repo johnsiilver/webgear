@@ -134,7 +134,7 @@ func (w *Wasm) Run(ctx context.Context) {
 	w.initEvents()
 	js.Global().Get("document").Call("close")
 
-	log.Println("document as it set in Run():\n", js.Global().Get("document").Get("documentElement").Get("innerHTML"))
+	//log.Println("document as it set in Run():\n", js.Global().Get("document").Get("documentElement").Get("innerHTML"))
 	docUpdaterHolder <- updater
 
 	close(w.ready)
@@ -170,10 +170,9 @@ func (w *Wasm) initEvents() {
 	var cb js.Func
 	cb = js.FuncOf(
 		func(this js.Value, args []js.Value) interface{} {
-			log.Println("HEEEEEEEEEERRRRRRRRRRRRRRREEEEEEEEEEEEEEEEEE")
 			go func() {
 				wg := &sync.WaitGroup{}
-				defer func () {
+				defer func() {
 					wg.Wait()
 					cb.Release()
 				}()

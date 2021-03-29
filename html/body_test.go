@@ -27,7 +27,7 @@ func TestBody(t *testing.T) {
 				Elements: []Element{
 					&Div{
 						Elements: []Element{
-							&A{Href: "/subpage", Elements: []Element{TextElement("hello")}},
+							&A{Href: URLParse("/subpage"), Elements: []Element{TextElement("hello")}},
 						},
 					},
 				},

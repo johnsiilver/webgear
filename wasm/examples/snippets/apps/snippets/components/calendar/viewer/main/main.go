@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"log"
-	"time"
 	"syscall/js"
+	"time"
 
 	"github.com/johnsiilver/webgear/wasm"
 	"github.com/johnsiilver/webgear/wasm/examples/snippets/apps/snippets/components/calendar"
@@ -17,7 +17,7 @@ func exampleDay(month time.Month, day, year int) calendar.Day {
 	calDay := calendar.Day{}
 
 	now := time.Now()
-	if year == now.Year() && month  == now.Month() && day == now.Day() {
+	if year == now.Year() && month == now.Month() && day == now.Day() {
 		calDay.IsSelected = true
 		calDay.OnClick = func(this js.Value, root js.Value, args interface{}) {
 			ourArgs := args.(calendar.DayEventArgs)
@@ -31,12 +31,12 @@ func main() {
 	w := wasm.New()
 
 	calendarGear, err := calendar.New(
-		"calendar-component", 
-		"content-component", 
+		"calendar-component",
+		"content-component",
 		&calendar.Args{
 			CSSPath: "/static/calendar.css",
 			DayFunc: exampleDay,
-		}, 
+		},
 		w,
 	)
 	if err != nil {

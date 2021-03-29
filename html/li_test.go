@@ -25,7 +25,7 @@ func TestLi(t *testing.T) {
 				},
 				Events: (&Events{}).AddScript(OnError, "handleError"),
 				Elements: []Element{
-					&A{Href: "/subpage", Elements: []Element{TextElement("hello")}},
+					&A{Href: URLParse("/subpage"), Elements: []Element{TextElement("hello")}},
 				},
 			},
 
