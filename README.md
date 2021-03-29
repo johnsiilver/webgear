@@ -12,11 +12,20 @@ WebGear provides libraries to make Go the single language for writing web applic
 
 Good question. The world of web development has a lot of choices today. You could use React, Angular, Vuze, ...
 
-On top of that, this toolkit is written by someone who loathes web development. It may be ubiquitous, but HTTP
-and HTML (in its modern form) are absolutely the worst. Javascript? are you kidding me with that language??
+However, if you loath developing in:
+- Javascript/Typescript/Dart/...
+- Writing in some server side template language
+- Writing in some framework
+- Writing in HTML too
+- Oh, don't forget CSS also
+- ...
+
+Then his toolkit might be for you (however, I didn't get rid of CSS, sorry).
+
+It may be ubiquitous, but HTTP and HTML (in its modern form) are absolutely the worst. Javascript? are you kidding me with that language??
 Typescript, a slightly less bad Javascript that has to compile to Javacript? Dart????
 
-So, if you feel similar to that last paragraph, this might be for you:
+A few things this offers:
 - Program in Go and serve directly from Go.
 - No more template debugging
 - Serve your assets easily
@@ -28,20 +37,22 @@ You still must deal with CSS, but I provide web components so you can keep your 
 ## Production Quality?
 
 No idea. I've used it for personal projects and such. It has some rough edges. I don't support all tags (there are a lot).
-Its performant for what I do, but if I was Google's front page I doubt it.
+Its performant for what I do, but if I was Google's front page I doubt it. You probably aren't Google's frontpage.
 
-Also, its going to change. I don't expect any major "destroy everything" type of changes. But I'm sure it will get lots
+Calls will change, hoever I don't expect any major "destroy everything" type of changes. But I'm sure it will get lots
 of refinements. Most will go unnoticed. 
 
-Also, I doubt I will ever release a 1.0. I'm not in love with Go's semantic versioning where I have to create new v2/ directories
+I doubt I will ever release a 1.0. I'm not in love with Go's semantic versioning where I have to create new v2/ directories
 and such. I get why, I just don't like it.
+
+But I will version an any breaking changes on the v0 minor version and patches for additions.
 
 ## Is this a Framework?
 
 Not really, though I imagine you could build a framework from this. All of the code you will find here are at the low 
 HTML and Javascript level. 
 
-It might be argued that the addition of the Component type and some WASM helpers are frameworky, but I included them
+It might be argued that the addition of the Component type and some WASM helpers are frameworky. But I included them
 to simply get around the nastiness of using some very useful web concepts.
 
 ## Packages
@@ -58,13 +69,13 @@ More indepth documentation will be in the godoc.
 
 ### Example: Create a simple HTML page and serve it
 
-This can be found in html/examples/basic .
-
 A few notes:
-- A "*Doc" object represents an HTML document and is the fundamental structure used.
+- A "\*Doc" object represents an HTML document and is the fundamental structure used.
 - An "Element" interface is used to represent all HTML elements that are defined.
 - I use the "." import to avoid having to type &html.Div{} and &html.Title{} (all Go rules have exceptions, I think this is one)
 
+
+The example is at html/examples/basic
 
 ```go
 package main
@@ -238,6 +249,8 @@ Simply put, you can add a Dynamic() to create an Element that uses a DynamicFunc
 It will pass a Pipeline object to your DynamicFunc() which responds with the []Element you want to add in that location.
 The Pipeline object will contain your http.Request object.
 
+The example is at html/examples/dynamic
+
 ```go
 // HelloUser looks for the user's name as a query string element and prints hello to that name.
 func HelloUser(pipe Pipeline) []Element {
@@ -272,10 +285,10 @@ func main() {
 This example will simply read the query string and if there is a "name" key will print hello to that name.
 
 But Dynamic can do much more. You can create a type that has access to databases or clients to other services
-and then use a method on that type to implement the DynamicFunc(). Then that func can grab all kinds of data or record data
+and then use a method on that type to implement the DynamicFunc(). Then that func can access other data or record data
 in response to a request.
 
-I find for many of my needs I never need to go to WASM or Javascript using just Dynamic.
+I find for many of my needs I never need to go to WASM or Javascript and just use Dynamic.
 
 ### Example: What about Events?
 
@@ -283,7 +296,9 @@ Let's create an event that makes a modal and when a button is pressed it hides.
 
 This will use a little javascript, as javascript is needed with non-WASM events.
 
+The example is at html/examples/events
 ```go
+
 ...
 
 func modal() []Element {
@@ -353,7 +368,9 @@ However adding components way more difficult than it had to be, relying on Javas
 
 So I have created a Component() Element to allow you to create these encapsulated elements with ease.
 
-In the example below, I'm going to create a component that acts as a banner. The code is located at html/examples/components .
+In the example below, I'm going to create a component that acts as a banner. 
+
+The code is located at html/examples/components .
 
 Defining the component:
 ```go
