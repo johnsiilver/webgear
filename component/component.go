@@ -148,7 +148,6 @@ var scriptTemplateTxt = `
 			document.body.replaceChild(newcomp, old);
 		}
 	}
-	console.log("hello world");
 	{{.Self.LoaderName}}();
 </script>
 {{ end }}
