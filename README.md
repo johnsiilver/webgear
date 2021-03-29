@@ -356,14 +356,13 @@ affecting by other element's CSS styling.
 
 Nothing is worse than changing a CSS element and watching the whole page change.
 
-Some years ago someonecame up with the idea of web components:
+Some years ago someone came up with the idea of web components:
 https://developer.mozilla.org/en-US/docs/Web/Web_Components
 
 My first experience with these was in Dart using Polymer. However after they canned the Dart version, I decided I never wanted to use
 either tech again (nope, not even with Flutter).
 
-But having reusable components (though I think this is less compelling) and having custom tags with encapsulated CSS 
-was somethign I missed.
+But having reusable components and custom tags with encapsulated CSS was somethign I missed.
 
 However adding components way more difficult than it had to be, relying on Javascript nastiness.
 
@@ -486,8 +485,9 @@ func main() {
 
 ### Example: Screw Javascript, do some WASM!!
 
-I'm going to add examples on how to use the WASM framework. Right now it works, but I haven't used it for a lot of
-things. You are free to use it, but I'm going to need some more time to document it.
+TBD
+
+I'm going to add examples on how to use the WASM framework in the future. Sorry, just haven't got to it yet.
 
 ## Compile and Runtime errors
 
