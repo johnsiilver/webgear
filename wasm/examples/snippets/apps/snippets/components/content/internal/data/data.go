@@ -1,12 +1,12 @@
 package data
 
 import (
-	"net/http"
+	"bytes"
 	"context"
 	"fmt"
-	"time"
-	"bytes"
 	"io/ioutil"
+	"net/http"
+	"time"
 
 	"github.com/johnsiilver/webgear/wasm/examples/snippets/grpc/date"
 
@@ -18,16 +18,16 @@ import (
 // Snippet interacts with a GRPC service over REST for grabbing or saving content.
 type Snippet struct {
 	endpoint string
-	client *http.Client
-	url string
+	client   *http.Client
+	url      string
 }
 
 // NewSnippet is the constructor for our proto service.
 func NewSnippet(endpoint string) *Snippet {
 	return &Snippet{
 		endpoint: endpoint,
-		url: fmt.Sprintf("http://%s", endpoint),
-		client: &http.Client{},
+		url:      fmt.Sprintf("http://%s", endpoint),
+		client:   &http.Client{},
 	}
 }
 
@@ -68,7 +68,7 @@ func (s *Snippet) Fetch(ctx context.Context, day time.Time) (*pb.GetResp, error)
 func (s *Snippet) Save(ctx context.Context, day time.Time, content string) error {
 	pbReq := &pb.SaveReq{
 		UnixNano: date.SafeUnixNano(day),
-		Content: content,
+		Content:  content,
 	}
 
 	b, err := protojson.Marshal(pbReq)

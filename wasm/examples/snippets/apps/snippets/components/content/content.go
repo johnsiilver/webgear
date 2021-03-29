@@ -2,9 +2,9 @@ package content
 
 import (
 	//"context"
-	"time"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/johnsiilver/webgear/component"
 	"github.com/johnsiilver/webgear/html/builder"
@@ -13,24 +13,24 @@ import (
 	"github.com/johnsiilver/webgear/wasm/examples/snippets/grpc/date"
 
 	. "github.com/johnsiilver/webgear/html"
-
 )
 
 // mode indicates if we are in view or edit mode.
 type Mode int
+
 const (
-	UnknownMode = 0
-	View Mode = 1
-	Edit Mode = 2
+	UnknownMode      = 0
+	View        Mode = 1
+	Edit        Mode = 2
 )
 
 // buildContent is used to build our content area that we use to edit and view
 // our markdown content that represents notes for the week.
 type buildContent struct {
-	mode Mode
+	mode      Mode
 	immutable bool
-	date time.Time
-	content string
+	date      time.Time
+	content   string
 
 	build *builder.HTML
 }
@@ -40,7 +40,7 @@ func (b *buildContent) doc() *Doc {
 	b.build = builder.NewHTML(&Head{}, &Body{})
 	b.build.Add(
 		&Link{
-			Rel: "stylesheet", 
+			Rel:  "stylesheet",
 			Href: URLParse("/static/apps/snippets/components/content/content.css"),
 		},
 	)
@@ -82,10 +82,10 @@ func (b *buildContent) leftArrow() *Doc {
 	b.build.Into(&H{Level: 1})
 	b.build.Add(TextElement("&#171"))
 	b.build.Up()
-	b.build.Up()// Out of span
+	b.build.Up() // Out of span
 
 	switch b.mode {
-	case View: 
+	case View:
 		return b.viewBox()
 	case Edit:
 		return b.editBox()
@@ -97,27 +97,26 @@ func (b *buildContent) leftArrow() *Doc {
 // viewBox assembles our textarea tag that allows the user to view the
 // content of their weekly entry. This is only called if our mode==view.
 func (b *buildContent) viewBox() *Doc {
-	placeholder := "Nothing to show" 
+	placeholder := "Nothing to show"
 	if b.immutable {
 		placeholder = "No entry for this week"
 	}
 
-
 	b.build.Add(
 		&TextArea{
 			GlobalAttrs: GlobalAttrs{ID: "textBox"},
-			ReadOnly: true,
+			ReadOnly:    true,
 			Placeholder: placeholder,
-			Element: TextElement(b.content),
+			Element:     TextElement(b.content),
 		},
 	)
 
 	if !b.immutable {
 		b.build.Add(
 			&Input{
-				GlobalAttrs: GlobalAttrs{ID: "editButton"}, 
-				Type: ButtonInput, 
-				Value: "Edit",
+				GlobalAttrs: GlobalAttrs{ID: "editButton"},
+				Type:        ButtonInput,
+				Value:       "Edit",
 			},
 		)
 	}
@@ -130,17 +129,17 @@ func (b *buildContent) editBox() *Doc {
 	b.build.Add(
 		&TextArea{
 			GlobalAttrs: GlobalAttrs{ID: "textBox"},
-			Name: "body",
-			Element: TextElement(b.content),
+			Name:        "body",
+			Element:     TextElement(b.content),
 		},
 	)
 	b.build.Up() // Out of textInput
 	b.build.Up() // Out of textBox
 	b.build.Add(
 		&Input{
-			GlobalAttrs: GlobalAttrs{ID: "editButton"}, 
-			Type: ButtonInput, 
-			Value: "Save",
+			GlobalAttrs: GlobalAttrs{ID: "editButton"},
+			Type:        ButtonInput,
+			Value:       "Save",
 		},
 	)
 
@@ -154,15 +153,15 @@ func (b *buildContent) rightArrow() *Doc {
 	b.build.Into(&H{Level: 1})
 	b.build.Add(TextElement("&#187"))
 	b.build.Up()
-	b.build.Up()// Out of span
+	b.build.Up() // Out of span
 
 	return b.build.Doc()
 }
 
 type Args struct {
-	Day time.Time
-	Mode Mode
-	Immutable bool
+	Day          time.Time
+	Mode         Mode
+	Immutable    bool
 	RestEndpoint string
 }
 
@@ -176,8 +175,8 @@ func (a Args) validate() error {
 	return nil
 }
 
-// New constructs a new component that shows a textarea ands some controls 
-// that can be in a view mode or in a edit mode. The edit mode allows saving 
+// New constructs a new component that shows a textarea ands some controls
+// that can be in a view mode or in a edit mode. The edit mode allows saving
 // to our backend server via a REST call.
 func New(name string, args Args, w *wasm.Wasm, options ...component.Option) (*component.Gear, error) {
 	if err := args.validate(); err != nil {
@@ -188,24 +187,24 @@ func New(name string, args Args, w *wasm.Wasm, options ...component.Option) (*co
 	}
 
 	/*
-	snip := data.NewSnippet(args.RestEndpoint)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
-	defer cancel()
+		snip := data.NewSnippet(args.RestEndpoint)
+		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		defer cancel()
 
-	log.Println("before fetch")
-	resp, err := snip.Fetch(ctx, args.Day)
-	if err != nil {
-		return nil, err
-	}
+		log.Println("before fetch")
+		resp, err := snip.Fetch(ctx, args.Day)
+		if err != nil {
+			return nil, err
+		}
 	*/
 	log.Println("after fetch")
 
-	content := buildContent {
-		mode: args.Mode,
+	content := buildContent{
+		mode:      args.Mode,
 		immutable: args.Immutable,
-		date: args.Day,
-		content: "",//resp.Content,
-		build: builder.NewHTML(&Head{}, &Body{}),
+		date:      args.Day,
+		content:   "", //resp.Content,
+		build:     builder.NewHTML(&Head{}, &Body{}),
 	}
 	log.Println("before component.New()")
 

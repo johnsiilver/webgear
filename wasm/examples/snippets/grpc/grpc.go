@@ -2,13 +2,13 @@ package grpc
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
-	"io/ioutil"
-	"time"
-	"log"
-	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/johnsiilver/webgear/wasm/examples/snippets/grpc/date"
 

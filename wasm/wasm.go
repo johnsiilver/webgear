@@ -173,7 +173,7 @@ func (w *Wasm) initEvents() {
 			log.Println("HEEEEEEEEEERRRRRRRRRRRRRRREEEEEEEEEEEEEEEEEE")
 			go func() {
 				wg := &sync.WaitGroup{}
-				defer func () {
+				defer func() {
 					wg.Wait()
 					cb.Release()
 				}()

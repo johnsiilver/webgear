@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	port    = flag.Int("port", 8080, "The port to run the server on")
+	port = flag.Int("port", 8080, "The port to run the server on")
 )
 
 func main() {
