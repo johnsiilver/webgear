@@ -28,12 +28,13 @@ func TestIFrame(t *testing.T) {
 				Width:               110,
 				ReferrerPolicy:      OriginWhenCrossOrigin,
 				Sandboxing:          Sandboxing{AllowFormsSB, AllowPopupsSB},
+				Loading: LazyILoad,
 			},
 
 			want: strings.TrimSpace(`
 <iframe name="name" src="https://vimeo.com" allow="autoplay; fullscreen" allowfullscreen="true" ` +
 				`allowpaymentrequest="true" height="110" width="110" referrerpolicy="origin-when-cross-origin" ` +
-				`sandbox="allow-forms allow-popups" accesskey="key" onerror="handleError"></iframe>
+				`sandbox="allow-forms allow-popups" loading="lazy" accesskey="key" onerror="handleError"></iframe>
 `),
 		},
 	}
