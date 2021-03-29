@@ -160,7 +160,8 @@ func main() {
 	}
 	log.Printf("http server serving on :%d", *port)
 	log.Fatal(server.ListenAndServe())
-}```
+}
+```
 
 This is the most basic way of creating a page. If writing out a lot of content, you run into a flaw with the example above::
 
