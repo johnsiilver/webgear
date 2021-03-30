@@ -387,7 +387,7 @@ In the example below, I'm going to create a component that acts as a banner.
 
 The code is located at html/examples/components .
 
-![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/component.png)
+![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/component.gif)
 
 Defining the component:
 ```go
