@@ -38,7 +38,7 @@ You still must deal with CSS, but I provide web components so you can keep your 
 
 One of the public sites I run with it is [Golang Basics](http://golangbasics.com)
 
-![golangbasics.com](https://github.com/johnsiilver/webgear/raw/master/docs/images/golangbasics.png)
+![golangbasics.com](https://github.com/johnsiilver/webgear/raw/master/docs/images/golangbasics.gif)
 
 
 ## Production Quality?
