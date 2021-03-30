@@ -34,20 +34,24 @@ You can still insert Javascript if you need to. But you can also go to WASM and 
 
 You still must deal with CSS, but I provide web components so you can keep your CSS sane.
 
+## Where can I see this running a site
+
+One of the public sites I run with it is [Golang Basics](http://golangbasics.com)
+
+![golangbasics.com](https://github.com/johnsiilver/webgear/raw/master/docs/images/golangbasics.png)
+
+
 ## Production Quality?
 
-No idea. I've used it for personal projects and such. It has some rough edges. I don't support all tags (there are a lot).
-Its performant for what I do, but if I was Google's front page I doubt it. 
+I've used it for personal projects, renders fast and is easy to develop in once you get started. 
+
+I don't support all tags (there are a lot). Its performant for what I do, but if I was Google's front page I doubt it. 
 
 You probably aren't Google's frontpage.
 
-Calls will change, however I don't expect any major "destroy everything" type of changes. But I'm sure it will get lots
-of refinements. Most will go unnoticed. 
+I'm sure it will get refinements as we move forward. Most will go unnoticed. 
 
-I doubt I will ever release a 1.0. I'm not in love with Go's semantic versioning where I have to create new v2/ directories
-and such. I get why, I just don't like it.
-
-I will version any breaking changes on the v0 minor version and patches for additions.
+I will version any breaking changes on the v0 minor version and patches for additions while we are at v0..
 
 ## Is this a Framework?
 
@@ -71,6 +75,8 @@ More indepth documentation will be in the godoc.
 
 ### Example: Create a simple HTML page and serve it
 
+![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/basic.png)
+ 
 A few notes:
 - A "\*Doc" object represents an HTML document and is the fundamental structure used.
 - An "Element" interface is used to represent all HTML elements that are defined.
@@ -182,6 +188,8 @@ Also, while we are statically building a table here, this really shines when bui
 
 The complete code can be found in html/examples/builder .
 
+![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/builder.png)
+
 ```go
 
 ...
@@ -254,6 +262,8 @@ The Pipeline object will contain your http.Request object.
 
 The example is at html/examples/dynamic
 
+![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/dynamic.png)
+
 ```go
 // HelloUser looks for the user's name as a query string element and prints hello to that name.
 func HelloUser(pipe Pipeline) []Element {
@@ -300,6 +310,9 @@ Let's create an event that makes a modal and when a button is pressed it hides.
 This will use a little javascript, as javascript is needed with non-WASM events.
 
 The example is at html/examples/events
+
+![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/events.png)
+
 ```go
 
 ...
@@ -373,6 +386,8 @@ So I have created a Component() Element to allow you to create these encapsulate
 In the example below, I'm going to create a component that acts as a banner. 
 
 The code is located at html/examples/components .
+
+![result](https://github.com/johnsiilver/webgear/raw/master/docs/images/component.png)
 
 Defining the component:
 ```go
