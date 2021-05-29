@@ -28,7 +28,7 @@ func TestIFrame(t *testing.T) {
 				Width:               110,
 				ReferrerPolicy:      OriginWhenCrossOrigin,
 				Sandboxing:          Sandboxing{AllowFormsSB, AllowPopupsSB},
-				Loading: LazyILoad,
+				Loading:             LazyILoad,
 			},
 
 			want: strings.TrimSpace(`

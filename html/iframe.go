@@ -47,7 +47,7 @@ const (
 // IFrameLoad indicates when to load an IFrame's content.
 type IFrameLoad string
 
-const(
+const (
 	// EagerILoad loads the IFrame even if it isn't visible yet on the screen. This is the default.
 	EagerILoad IFrameLoad = "eager"
 	// LazyILoad loads the IFrame only when it becomes visible on the screen.

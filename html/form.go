@@ -376,6 +376,9 @@ type OptGroupElement interface {
 
 // OptGroup is used to group related options in a Select element.
 type OptGroup struct {
+	GlobalAttrs
+	Events *Events
+
 	// Disabled specifies that a text area should be disabled.
 	Disabled bool `html:"attr"`
 	// Lablel specifies a shorter label for an option.
@@ -407,6 +410,9 @@ var legendTmpl = template.Must(template.New("legend").Parse(strings.TrimSpace(`
 
 // Legend defines a caption for the FieldSet element.
 type Legend struct {
+	GlobalAttrs
+	Events *Events
+
 	// Caption is the legend's caption.
 	Caption string
 }
@@ -432,6 +438,9 @@ var fieldSetTmpl = template.Must(template.New("fieldset").Parse(strings.TrimSpac
 
 // FieldSet is used to group related elements in a form.
 type FieldSet struct {
+	GlobalAttrs
+	Events *Events
+
 	// Disabled specifies that a text area should be disabled.
 	Disabled bool `html:"attr"`
 	// Form specifies which form the text area belongs to.
@@ -463,6 +472,9 @@ var outputTmpl = template.Must(template.New("output").Parse(strings.TrimSpace(`
 
 // Output is used to represent the result of a calculation.
 type Output struct {
+	GlobalAttrs
+	Events *Events
+
 	// For specifies the relationship between the result of the calculation, and the elements used in the calculation.
 	For string
 	// Form specifies which form the text area belongs to.
