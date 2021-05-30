@@ -466,6 +466,8 @@ func (f *FieldSet) Attr() template.HTMLAttr {
 	return template.HTMLAttr(output)
 }
 
+func (f *FieldSet) isFormElement() {}
+
 var outputTmpl = template.Must(template.New("output").Parse(strings.TrimSpace(`
 <output {{.Self.Attr}} {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}}></output>
 `)))
