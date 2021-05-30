@@ -130,6 +130,9 @@ type Input struct {
 	Name string
 	// Value is the value of the input field.
 	Value string
+
+	// Checked indicates that an Input of type RadioInput should be checked (aka selected).
+	Checked bool `html:"attr"`
 }
 
 func (i Input) isFormElement() {}
@@ -153,6 +156,10 @@ func (i Input) validate() error {
 	if i.Name == "" {
 		return fmt.Errorf("a Form had an Input without .Name, which is an error")
 	}
+	if i.Checked && i.Type != RadioInput {
+		return fmt.Errorf("a Form had an Input with attribute 'Checked' set, but not a RadioInput type(%s)", i.Type)
+	}
+
 	return nil
 }
 
