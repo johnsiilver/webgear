@@ -188,6 +188,12 @@ var docTmpl = template.Must(template.New("doc").Parse(strings.TrimSpace(`
 {{- if not .Self.Component}}</html>{{end}}
 `)))
 
+const (
+	// Zero is a sentinel value representing the number 0 when a numeric field requires the value to be 0.
+	// As 0 is the zero value for an int, we do not set fields that have 0 as the value.
+	Zero = 1<<63 - 1
+)
+
 // Pipeline represents a template pipeline. The Self attribute is only usable internally, any other use is
 // not supported. Component is used only internally by the component pacakge, any other use is not supported.
 // Data is what the user wishes to pass in for their application.
@@ -433,7 +439,7 @@ func structToString(i interface{}) string {
 			continue
 		}
 
-		// Names starting with _ are for internal use.
+		// Names starting with XXX are for internal use.
 		if strings.HasPrefix(sf.Name, "XXX") {
 			continue
 		}
@@ -492,6 +498,10 @@ func structToString(i interface{}) string {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if field.Int() == 0 {
 				continue
+			}
+			if field.Int() == Zero {
+				str = "0"
+				break
 			}
 			str = strconv.FormatInt(field.Int(), 10)
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
