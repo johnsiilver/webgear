@@ -117,6 +117,8 @@ const (
 	SubmitInput InputType = "submit"
 	// ButtonInput creates a button.
 	ButtonInput InputType = "button"
+	// NumberInput creates an input field like TextInput, but for numbers.
+	NumberInput InputType = "number"
 )
 
 // Input creates a method of input within a form.
@@ -130,6 +132,10 @@ type Input struct {
 	Name string
 	// Value is the value of the input field.
 	Value string
+
+	// Min is the minimum number that can be input. Type must be NumberInput.
+	// Max is the maximum number that can be input. Type must be NumberInput.
+	Min, Max int
 
 	// Checked indicates that an Input of type RadioInput should be checked (aka selected).
 	Checked bool `html:"attr"`
@@ -158,6 +164,9 @@ func (i Input) validate() error {
 	}
 	if i.Checked && i.Type != RadioInput {
 		return fmt.Errorf("a Form had an Input with attribute 'Checked' set, but not a RadioInput type(%s)", i.Type)
+	}
+	if (i.Min > 0 || i.Max > 0) && i.Type != NumberInput {
+		return fmt.Errorf("a Form had an Input with attribute 'Min' or 'Max' set, but type(%s) was not NumberInput", i.Type)
 	}
 
 	return nil
