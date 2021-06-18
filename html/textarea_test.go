@@ -35,8 +35,7 @@ func TestTextArea(t *testing.T) {
 			},
 
 			want: strings.TrimSpace(`
-<textarea accesskey="key" onerror="handleError" name="name" form="formid" cols="10" maxlength="1000" rows="40" dirname="name.dir" wrap="hard" placeholder="placeholder" autofocus disabled readonly required>text
-</textarea>
+<textarea accesskey="key" onerror="handleError" name="name" form="formid" cols="10" maxlength="1000" rows="40" dirname="name.dir" wrap="hard" placeholder="placeholder" autofocus disabled readonly required>text</textarea>
 `),
 		},
 	}

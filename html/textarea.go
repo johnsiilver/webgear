@@ -9,8 +9,7 @@ import (
 var textareaTmpl = template.Must(template.New("textarea").Parse(strings.TrimSpace(`
 <textarea {{.Self.GlobalAttrs.Attr}} {{.Self.Events.Attr}} {{.Self.Attr}}>
 	{{- $data := .}}
-	{{- .Self.Element.Execute $data}}
-</textarea>
+	{{- .Self.Element.Execute $data}}</textarea>
 `)))
 
 // WrapType specifies how the text in a textarea is to be wrapped when submitted in a form.
