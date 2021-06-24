@@ -119,6 +119,8 @@ const (
 	ButtonInput InputType = "button"
 	// NumberInput creates an input field like TextInput, but for numbers.
 	NumberInput InputType = "number"
+	// DateInput creates an input field for dates.
+	DateInput InputType = "date"
 )
 
 // Input creates a method of input within a form.
@@ -139,6 +141,9 @@ type Input struct {
 
 	// Checked indicates that an Input of type RadioInput should be checked (aka selected).
 	Checked bool `html:"attr"`
+
+	// ReadOnly indicates that the input cannot be changed.
+	ReadOnly bool `html:"attr"`
 }
 
 func (i Input) isFormElement() {}
