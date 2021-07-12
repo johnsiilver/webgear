@@ -108,6 +108,7 @@ func (m *Mux) Handle(pattern string, doc *html.Doc) error {
 		pattern,
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
+				r.ParseForm()
 				if err := doc.Execute(r.Context(), w, r); err != nil {
 					log.Println(err)
 					//http.Error(w, err.Error(), http.StatusInternalServerError)

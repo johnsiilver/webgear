@@ -121,6 +121,8 @@ const (
 	NumberInput InputType = "number"
 	// DateInput creates an input field for dates.
 	DateInput InputType = "date"
+	// CheckboxInput creates an input field that uses checkboxes.
+	CheckboxInput InputType = "checkbox"
 )
 
 // Input creates a method of input within a form.
@@ -138,6 +140,25 @@ type Input struct {
 	// Min is the minimum number that can be input. Type must be NumberInput.
 	// Max is the maximum number that can be input. Type must be NumberInput.
 	Min, Max int
+
+	// MinLength is the minimum number of character that can be input. Type must be TextInput.
+	// MaxLength is the maximum number of character that can be input. Type must be TextInput.
+	MinLength, MaxLength int
+
+	// Size is a number indicates out many characters wide the input should be.
+	Size int
+
+	// Placeholder is placeholder text that is in the input until the user types something. Type must be TextInput.
+	Placeholder string
+
+	// Required indicates if this input is required. Type must be TextInput.
+	Required bool `html:"attr"`
+
+	// Pattern is a regex that the input's content must match to be considered valid. Type must be TextInput.
+	Pattern string
+
+	// List is the id of the <datalist> element that contains autocompletes for this item. Type must be TextInput.
+	List string
 
 	// Checked indicates that an Input of type RadioInput should be checked (aka selected).
 	Checked bool `html:"attr"`
@@ -172,6 +193,20 @@ func (i Input) validate() error {
 	}
 	if (i.Min > 0 || i.Max > 0) && i.Type != NumberInput {
 		return fmt.Errorf("a Form had an Input with attribute 'Min' or 'Max' set, but type(%s) was not NumberInput", i.Type)
+	}
+	if i.Type != TextInput {
+		switch {
+		case i.MaxLength > 0 || i.MinLength > 0:
+			return fmt.Errorf("a Form had an Input with attribute 'MinLength' or 'MaxLength' set, but type(%s) was not a TextInput", i.Type)
+		case len(i.Placeholder) > 0:
+			return fmt.Errorf("a Form had an Input with attribute 'Placeholder' set, but type(%s) was not a TextInput", i.Type)
+		case len(i.Pattern) > 0:
+			return fmt.Errorf("a Form had an Input with attribute 'Pattern' set, but type (%s) was not a TextInput", i.Type)
+		case len(i.List) > 0:
+			return fmt.Errorf("a Form had an Input with attribute 'List' set, but type (%s) was not a TextInput", i.Type)
+		case i.Required:
+			return fmt.Errorf("a Form had an Input with attribute 'Required' set, but type (%s) was not a TextInput", i.Type)
+		}
 	}
 
 	return nil
