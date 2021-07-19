@@ -36,6 +36,7 @@ package handlers
 
 import (
 	"compress/gzip"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -51,6 +52,7 @@ type Mux struct {
 
 	caching   bool
 	gzipFiles bool
+	debug     bool
 
 	gzPool sync.Pool
 }
@@ -69,6 +71,13 @@ func DoNotCache() Option {
 func DoNotCompress() Option {
 	return func(m *Mux) {
 		m.gzipFiles = false
+	}
+}
+
+// Debug causes error messages from HTML rendering to be output.
+func Debug() Option {
+	return func(m *Mux) {
+		m.debug = true
 	}
 }
 
@@ -110,7 +119,9 @@ func (m *Mux) Handle(pattern string, doc *html.Doc) error {
 			func(w http.ResponseWriter, r *http.Request) {
 				r.ParseForm()
 				if err := doc.Execute(r.Context(), w, r); err != nil {
-					log.Println(err)
+					if m.debug {
+						log.Println(err)
+					}
 					//http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -134,9 +145,17 @@ func (m *Mux) HTTPHandler(pattern string, handler http.Handler) {
 	m.mux.Handle(pattern, handler)
 }
 
+// ServeFS passes a fs.FS that is walked and servers out of a root of /static/. This is similar to
+// ServeFilesWorkingDir() except it serves up all files in the FS that can be walked. Generally this
+// if for embeded files. Cannot be used with ServeFilesWorkingDir().
+func (m *Mux) ServeFS(filesys fs.FS) {
+	m.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(filesys))))
+}
+
 // ServeFilesWorkingDir will serve all files with the following file extensions that are in the
 // working directory or in any directory lower in the tree. It will never serve ., .. or .go files.
 // These files are all served from pattern. All files are served out of the /static/ path.
+// Cannot be used with ServeFS().
 func (m *Mux) ServeFilesWorkingDir(exts []string) {
 	wd, err := os.Getwd()
 	if err != nil {
