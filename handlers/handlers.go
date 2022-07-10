@@ -39,9 +39,11 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/johnsiilver/webgear/html"
 )
@@ -49,6 +51,8 @@ import (
 // Mux allows building a http.ServeMux for use in serving html.Doc object output.
 type Mux struct {
 	mux *http.ServeMux
+
+	expireCache *expireCache
 
 	caching   bool
 	gzipFiles bool
@@ -59,6 +63,22 @@ type Mux struct {
 
 // Option is an optional argument to the New constructor.
 type Option func(m *Mux)
+
+// StaticMode causes the server to cache the output from any page after the first call.  
+// The static page in cache will be returned as long as the expire time hasn't passed
+// since the last call to a page. The expire time is simply there to keep pages that aren't
+// used often from costing memory. expire and sweep must >= 30 seconds.
+func StaticMode(expire, sweep time.Duration) Option {
+	if expire < 30 * time.Second {
+		panic("expire must be >= 30 seconds")
+	}
+	if sweep < 30 * time.Second {
+		panic("expire must be >= 30 seconds")
+	}
+	return func(m *Mux) {
+		m.expireCache = newExpireCache(expire, sweep)
+	}
+}
 
 // DoNotCache tells the brower not to cache content.  This is extremely useful when you are doing development.
 func DoNotCache() Option {
@@ -103,7 +123,11 @@ func New(options ...Option) *Mux {
 
 // ServerMux returns an http.ServerMux wrapped in various handlers.  Use this with http.Server{} to serve the content.
 func (m *Mux) ServerMux() http.Handler {
-	return m.preventCaching(m.gzip(m.mux))
+	return m.staticCache(
+		m.preventCaching(
+			m.gzip(m.mux),
+		),
+	)
 }
 
 // Handle registers the doc for a given pattern. If a handler already exists for pattern, Handle panics.
@@ -212,6 +236,39 @@ func (m *Mux) ServeFilesFrom(dir, root string, exts []string) {
 			),
 		),
 	)
+}
+
+func (m *Mux) staticCache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// No cache.
+		if m.expireCache == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Cache hit.
+		e, err := m.expireCache.get(r.URL)
+		if err == nil {
+			for k, v := range e.h {
+				w.Header()[k] = v
+			}
+			w.Write(e.b)
+			return
+		}
+
+		// Cache miss.
+		c := httptest.NewRecorder()
+		next.ServeHTTP(c, r)
+
+		for k, v := range c.HeaderMap {
+			w.Header()[k] = v
+		}
+		w.WriteHeader(c.Code)
+		content := c.Body.Bytes()
+
+		m.expireCache.put(r.URL, c.HeaderMap, content)
+		w.Write(content)
+	})
 }
 
 func (m *Mux) gzip(next http.Handler) http.Handler {
